@@ -1,6 +1,8 @@
 package main
 
-import "time"
+import (
+	"time"
+)
 
 type Task struct {
 	// The "body" content of the task, in Markdown
