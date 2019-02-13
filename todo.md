@@ -17,6 +17,16 @@ I want this project to codify the various things I have running around in my
 head that I need to get done.
 
 # Requirements
+## Serialization
+This is important, so listed first.
+
+How the hell should I store these? As a first pass...JSON? YAML? Something
+standard and easy to do with Go. 
+
+But going forward I need a nice way to query, to remove, add, and finally _sync_
+across multiple devices. And that is going to be hard, especially once I add
+tags (if I do).
+
 ## Have a way to remind me of scheduled items that may or may not be regular
 Items that are regularly occurring should have some way to make them happen e.g.
 daily, weekly, monthly, yearly, etc.
