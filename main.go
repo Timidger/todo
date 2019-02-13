@@ -67,7 +67,7 @@ func print_tasks() {
 	root := get_path()
 	var todos []Task
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if info.Name() == ".todo" {
+		if path == root {
 			return nil
 		}
 		var task Task
