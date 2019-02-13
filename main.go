@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"unicode/utf8"
 )
 
 func main() {
@@ -22,9 +23,7 @@ func main() {
 	}
 }
 
-/// Add a task by reading in from STDIN
-func add_task() {
-	// TODO duplicated
+func get_path() string {
 	home := os.Getenv("HOME")
 	root := path.Join(home, ".todo/")
 	if _, err := os.Stat(root); os.IsNotExist(err) {
@@ -34,14 +33,21 @@ func add_task() {
 	} else if err != nil {
 		panic(err)
 	}
+	return root
+}
 
+/// Add a task by reading in from STDIN
+func add_task() {
+	root := get_path()
 	reader := bufio.NewReader(os.Stdin)
 	bytes, err := ioutil.ReadAll(reader)
 	if err != nil {
 		panic(err)
 	}
-	// TODO Check is utf8
 	text := string(bytes)
+	if !utf8.ValidString(text) {
+		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
+	}
 	// TODO Get a better name scheme
 	sha := sha1.New()
 	sha.Write(bytes)
@@ -58,16 +64,7 @@ func add_task() {
 
 // Print the tasks from ~/.todo
 func print_tasks() {
-	home := os.Getenv("HOME")
-	root := path.Join(home, ".todo/")
-	if _, err := os.Stat(root); os.IsNotExist(err) {
-		if err = os.Mkdir(root, 0700); err != nil {
-			panic(err)
-		}
-	} else if err != nil {
-		panic(err)
-	}
-
+	root := get_path()
 	var todos []Task
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if info.Name() == ".todo" {
@@ -78,8 +75,10 @@ func print_tasks() {
 		if err != nil {
 			return err
 		}
-		// TODO Check is utf8
 		task.body_content = string(content)
+		if !utf8.ValidString(task.body_content) {
+			panic(fmt.Sprintf("Invalid UTF-8 string: %v", task.body_content))
+		}
 		todos = append(todos, task)
 		return nil
 	})
