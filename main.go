@@ -1,4 +1,4 @@
-package main // import "git.sr.ht/~timidger/todo"
+package main
 
 import (
 	"bufio"
@@ -19,7 +19,7 @@ func main() {
 	case false:
 		add_task()
 	case true:
-		print_tasks()
+		print_tasks(get_tasks())
 	}
 }
 
@@ -65,9 +65,15 @@ func add_task() {
 }
 
 // Print the tasks from ~/.todo
-func print_tasks() {
+func print_tasks(tasks []Task) {
+	for i, task := range tasks {
+		fmt.Println(fmt.Sprintf("%d: %v", i, task.body_content))
+	}
+}
+
+func get_tasks() []Task {
 	root := get_path()
-	var todos []Task
+	var tasks []Task
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if path == root {
 			return nil
@@ -81,13 +87,11 @@ func print_tasks() {
 		if !utf8.ValidString(task.body_content) {
 			panic(fmt.Sprintf("Invalid UTF-8 string: %v", task.body_content))
 		}
-		todos = append(todos, task)
+		tasks = append(tasks, task)
 		return nil
 	})
-	for _, todo := range todos {
-		fmt.Println(todo.body_content)
-	}
 	if err != nil {
 		panic(err)
 	}
+	return tasks
 }
