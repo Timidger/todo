@@ -9,6 +9,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 	"unicode/utf8"
 )
 
@@ -48,11 +49,12 @@ func add_task() {
 		panic(err)
 	}
 	text := string(bytes)
-	if text == "" {
-		return
-	}
 	if !utf8.ValidString(text) {
 		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
+	}
+	text = strings.TrimSuffix(text, "\n")
+	if text == "" {
+		return
 	}
 	// TODO Get a better name scheme
 	sha := sha1.New()
