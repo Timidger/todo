@@ -14,11 +14,15 @@ import (
 
 func main() {
 	var to_list = flag.Bool("list", false, "List the things to do in no particular order")
+	var delete = flag.Int("delete", -1, "Deletes a task by index number")
 	flag.Parse()
-	switch *to_list {
-	case false:
+	fmt.Println(*delete)
+	switch {
+	case *delete >= 0:
+		delete_task(*delete)
+	case *to_list == false:
 		add_task()
-	case true:
+	case *to_list == true:
 		print_tasks(get_tasks())
 	}
 }
@@ -68,6 +72,19 @@ func add_task() {
 	new.WriteString(task.body_content)
 }
 
+/// Deletes a task by index
+func delete_task(task_index int) {
+	tasks := get_tasks()
+	if task_index >= len(tasks) {
+		fmt.Println("Index too large")
+		os.Exit(1)
+	}
+	if err := os.Remove(tasks[task_index].file_name); err != nil {
+		panic(err)
+	}
+	tasks = append(tasks[:task_index], tasks[task_index+1:]...)
+}
+
 // Print the tasks from ~/.todo
 func print_tasks(tasks []Task) {
 	for i, task := range tasks {
@@ -88,6 +105,7 @@ func get_tasks() []Task {
 			return err
 		}
 		task.body_content = string(content)
+		task.file_name = path
 		if !utf8.ValidString(task.body_content) {
 			panic(fmt.Sprintf("Invalid UTF-8 string: %v", task.body_content))
 		}

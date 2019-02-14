@@ -11,4 +11,6 @@ type Task struct {
 	// What this actually means is still up for debate.
 	// However, I feel strongly that this should "explode" in some way.
 	due_date time.Time
+	// TODO REMOVE. This is a stupid hack.
+	file_name string
 }
