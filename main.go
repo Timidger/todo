@@ -56,7 +56,8 @@ func add_task() {
 	sha.Write(bytes)
 	save_path := path.Join(root, fmt.Sprintf("%x", sha.Sum(nil))+".todo")
 	if _, err := os.Stat(save_path); !os.IsNotExist(err) {
-		panic(fmt.Sprintf("You have already made that a task", save_path))
+		fmt.Println("You have already made that a task")
+		os.Exit(1)
 	}
 	var task Task
 	task.body_content = text
