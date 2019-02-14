@@ -18,12 +18,15 @@ func main() {
 	var delete = flag.Int("d", -1, "Deletes a task by index number")
 	flag.Parse()
 	switch {
+	case len(os.Args[1:]) >= 1 && !*to_list:
+		add_task(strings.Join(os.Args[1:], ""))
+	case *to_list:
+		print_tasks(get_tasks())
 	case *delete >= 0:
 		delete_task(*delete)
-	case *to_list == false:
-		add_task()
-	case *to_list == true:
-		print_tasks(get_tasks())
+	// default case
+	case !*to_list:
+		add_task("")
 	}
 }
 
@@ -41,14 +44,16 @@ func get_path() string {
 }
 
 /// Add a task by reading in from STDIN
-func add_task() {
+func add_task(text string) {
 	root := get_path()
-	reader := bufio.NewReader(os.Stdin)
-	bytes, err := ioutil.ReadAll(reader)
-	if err != nil {
-		panic(err)
+	if text == "" {
+		reader := bufio.NewReader(os.Stdin)
+		bytes, err := ioutil.ReadAll(reader)
+		if err != nil {
+			panic(err)
+		}
+		text = string(bytes)
 	}
-	text := string(bytes)
 	if !utf8.ValidString(text) {
 		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
 	}
@@ -58,7 +63,7 @@ func add_task() {
 	}
 	// TODO Get a better name scheme
 	sha := sha1.New()
-	sha.Write(bytes)
+	sha.Write([]byte(text))
 	save_path := path.Join(root, fmt.Sprintf("%x", sha.Sum(nil))+".todo")
 	if _, err := os.Stat(save_path); !os.IsNotExist(err) {
 		fmt.Println("You have already made that a task")
