@@ -21,7 +21,7 @@ func main() {
 	case *delete >= 0:
 		delete_task(*delete)
 	case len(os.Args[1:]) >= 1 && !*to_list:
-		add_task(strings.Join(os.Args[1:], ""))
+		add_task(strings.Join(os.Args[1:], " "))
 	case *to_list:
 		print_tasks(get_tasks())
 	// default case
