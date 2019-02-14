@@ -45,6 +45,9 @@ func add_task() {
 		panic(err)
 	}
 	text := string(bytes)
+	if text == "" {
+		return
+	}
 	if !utf8.ValidString(text) {
 		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
 	}
