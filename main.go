@@ -13,10 +13,9 @@ import (
 )
 
 func main() {
-	var to_list = flag.Bool("list", false, "List the things to do in no particular order")
-	var delete = flag.Int("delete", -1, "Deletes a task by index number")
+	var to_list = flag.Bool("l", false, "List the things to do in no particular order")
+	var delete = flag.Int("d", -1, "Deletes a task by index number")
 	flag.Parse()
-	fmt.Println(*delete)
 	switch {
 	case *delete >= 0:
 		delete_task(*delete)
