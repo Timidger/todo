@@ -34,7 +34,12 @@ func main() {
 		}
 	}
 	input := strings.Join(os.Args[1:], " ")
-	add_task(input)
+	if input != "" {
+		add_task(input)
+	} else {
+		reader := bufio.NewReader(os.Stdin)
+		read_in_task(reader)
+	}
 }
 
 func get_path() string {
@@ -50,17 +55,19 @@ func get_path() string {
 	return root
 }
 
-/// Add a task by reading in from STDIN
+// Read a task in from a reader and pass it off to add_task.
+func read_in_task(reader *bufio.Reader) {
+	bytes, err := ioutil.ReadAll(reader)
+	if err != nil {
+		panic(err)
+	}
+	text := string(bytes)
+	add_task(text)
+}
+
+// Add a task with the given body.
 func add_task(text string) {
 	root := get_path()
-	if text == "" {
-		reader := bufio.NewReader(os.Stdin)
-		bytes, err := ioutil.ReadAll(reader)
-		if err != nil {
-			panic(err)
-		}
-		text = string(bytes)
-	}
 	if !utf8.ValidString(text) {
 		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
 	}
