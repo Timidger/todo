@@ -3,32 +3,38 @@ package main
 import (
 	"bufio"
 	"crypto/sha1"
-	"flag"
 	"fmt"
 	"git.sr.ht/~sircmpwn/getopt"
 	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"unicode/utf8"
 )
 
 func main() {
-	var to_list = flag.Bool("l", false, "List the things to do in no particular order")
-	var delete = flag.Int("d", -1, "Deletes a task by index number")
-	flag.Parse()
-	switch {
-	case *delete >= 0:
-		delete_task(*delete)
-	case len(os.Args[1:]) >= 1 && !*to_list:
-		add_task(strings.Join(os.Args[1:], " "))
-	case *to_list:
-		print_tasks(get_tasks())
-	// default case
-	case !*to_list:
-		add_task("")
+	opts, _, err := getopt.Getopts(os.Args[1:], "ld:")
+	if err != nil {
+		panic(err)
 	}
+	for _, opt := range opts {
+		switch opt.Option {
+		case 'l':
+			print_tasks(get_tasks())
+			return
+		case 'd':
+			to_delete, err := strconv.ParseInt(opt.Value, 10, 64)
+			if err != nil {
+				panic(err)
+			}
+			delete_task(int(to_delete))
+			return
+		}
+	}
+	input := strings.Join(os.Args[1:], " ")
+	add_task(input)
 }
 
 func get_path() string {
@@ -82,6 +88,10 @@ func add_task(text string) {
 /// Deletes a task by index
 func delete_task(task_index int) {
 	tasks := get_tasks()
+	if task_index < 0 {
+		fmt.Println("Index must be non-negative")
+		os.Exit(1)
+	}
 	if task_index >= len(tasks) {
 		fmt.Println("Index too large")
 		os.Exit(1)
