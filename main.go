@@ -5,6 +5,7 @@ import (
 	"crypto/sha1"
 	"flag"
 	"fmt"
+	"git.sr.ht/~sircmpwn/getopt"
 	"io/ioutil"
 	"os"
 	"path"
