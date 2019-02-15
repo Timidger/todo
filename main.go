@@ -33,8 +33,8 @@ func main() {
 			return
 		}
 	}
-	input := strings.Join(os.Args[1:], " ")
-	if input != "" {
+	if len(os.Args) > 1 {
+		input := strings.Join(os.Args[1:], " ")
 		add_task(input)
 	} else {
 		reader := bufio.NewReader(os.Stdin)
