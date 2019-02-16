@@ -111,6 +111,7 @@ func delete_task(task_index int) {
 		fmt.Println("Index too large")
 		os.Exit(1)
 	}
+	fmt.Printf("%d: %v\n", task_index, tasks[task_index].body_content)
 	if err := os.Remove(tasks[task_index].file_name); err != nil {
 		panic(err)
 	}
