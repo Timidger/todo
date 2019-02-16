@@ -14,13 +14,21 @@ import (
 	"unicode/utf8"
 )
 
+const help_message = "Usage of todo:\n" +
+	"  -h         Show this help message\n" +
+	"  -l         List the things to do in no particular order\n" +
+	"  -d <value> Delete a task by index number\n"
+
 func main() {
-	opts, _, err := getopt.Getopts(os.Args[1:], "ld:")
+	opts, _, err := getopt.Getopts(os.Args[1:], "hld:")
 	if err != nil {
 		panic(err)
 	}
 	for _, opt := range opts {
 		switch opt.Option {
+		case 'h':
+			fmt.Printf(help_message)
+			return
 		case 'l':
 			print_tasks(get_tasks())
 			return
