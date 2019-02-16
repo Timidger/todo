@@ -31,15 +31,16 @@ func main() {
 			return
 		case 'l':
 			print_tasks(get_tasks())
-			return
 		case 'd':
 			to_delete, err := strconv.ParseInt(opt.Value, 10, 64)
 			if err != nil {
 				panic(err)
 			}
 			delete_task(int(to_delete))
-			return
 		}
+	}
+	if len(opts) > 0 {
+		return
 	}
 	if len(os.Args) > 1 {
 		input := strings.Join(os.Args[1:], " ")
