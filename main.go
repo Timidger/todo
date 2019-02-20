@@ -22,9 +22,9 @@ const TIME_FORMAT = "2006/01/02"
 
 // TODO I'm trying to encode an enum but this feels gross
 const (
-	LISTING_NONE  = iota
-	LISTING_ALL   = iota
-	LISTING_TODAY = iota
+	LISTING_NONE = iota
+	LISTING_ALL
+	LISTING_TODAY
 )
 
 func main() {
