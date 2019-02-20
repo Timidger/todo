@@ -16,9 +16,10 @@ import (
 )
 
 const help_message = "Usage of todo:\n" +
-	"  -h         Show this help message\n" +
-	"  -l         List the things to do in no particular order\n" +
-	"  -d <value> Delete a task by index number\n"
+	"  -h            Show this help message\n" +
+	"  -l            List the things to do today in no particular order\n" +
+	"  -d <value>    Delete a task by index number\n" +
+	"  -t YYYY/MM/DD Delay the task until the date\n"
 
 func main() {
 	opts, others, err := getopt.Getopts(os.Args[1:], "hlt:d:")
