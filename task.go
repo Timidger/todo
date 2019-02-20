@@ -59,8 +59,7 @@ func AddTask(text string, due_date time.Time) {
 }
 
 /// Deletes a task by index
-func DeleteTask(task_index int) {
-	tasks := GetTasks()
+func DeleteTask(tasks []Task, task_index int) {
 	if task_index < 0 {
 		fmt.Println("Index must be non-negative")
 		// TODO Do proper error handling
