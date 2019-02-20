@@ -44,6 +44,7 @@ func AddTask(text string, due_date time.Time) {
 	}
 	var task Task
 	task.body_content = text
+	task.due_date = due_date
 	new, err := os.Create(save_path)
 	if err != nil {
 		panic(err)
@@ -85,15 +86,23 @@ func GetTasks() []Task {
 			return nil
 		}
 		var task Task
-		content, err := ioutil.ReadFile(path)
+		bytes, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
 		}
-		task.body_content = string(content)
-		task.file_name = path
-		if !utf8.ValidString(task.body_content) {
-			panic(fmt.Sprintf("Invalid UTF-8 string: %v", task.body_content))
+		if !utf8.ValidString(string(bytes)) {
+			panic(fmt.Sprintf("Invalid UTF-8 string: %v", bytes))
 		}
+		split := strings.SplitN(string(bytes), "\n", 2)
+		if len(split) < 2 {
+			panic(fmt.Sprintf("Invalid format \"%v\"", string(bytes)))
+		}
+		task.due_date, err = time.Parse(TIME_FORMAT, split[0])
+		if err != nil {
+			panic(err)
+		}
+		task.body_content = split[1]
+		task.file_name = path
 		tasks = append(tasks, task)
 		return nil
 	})
