@@ -14,3 +14,8 @@ type Task struct {
 	// TODO REMOVE. This is a stupid hack.
 	file_name string
 }
+
+// Determines if a task is due today (or any days before today)
+func (task *Task) due_today() bool {
+	return task.due_date.Before(time.Now())
+}
