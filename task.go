@@ -48,7 +48,13 @@ func AddTask(text string, due_date time.Time) {
 	if err != nil {
 		panic(err)
 	}
-	new.WriteString(task.body_content)
+	defer new.Close()
+	if _, err := new.WriteString(fmt.Sprintf("%v\n", due_date.Format(TIME_FORMAT))); err != nil {
+		panic(err)
+	}
+	if _, err := new.WriteString(task.body_content); err != nil {
+		panic(err)
+	}
 }
 
 /// Deletes a task by index
