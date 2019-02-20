@@ -14,13 +14,14 @@ import (
 const help_message = "Usage of todo:\n" +
 	"  -h            Show this help message\n" +
 	"  -l            List the things to do today in no particular order\n" +
+	"  -a            List all the things to do, regardless of due date, in no particular order" +
 	"  -d <value>    Delete a task by index number\n" +
 	"  -t YYYY/MM/DD Delay the task until the date\n"
 
 const TIME_FORMAT = "2006/01/02"
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args[1:], "hlt:d:")
+	opts, others, err := getopt.Getopts(os.Args[1:], "halt:d:")
 	if err != nil {
 		panic(err)
 	}
@@ -38,7 +39,19 @@ func main() {
 			fmt.Printf(help_message)
 			return
 		case 'l':
-			printTasksToday(GetTasks())
+			tasks := GetTasks()
+			i := 0
+			for _, task := range tasks {
+				if task.DueToday() {
+					fmt.Println(fmt.Sprintf("%d: %v", i, task.body_content))
+					i++
+				}
+			}
+		case 'a':
+			tasks := GetTasks()
+			for i, task := range tasks {
+				fmt.Println(fmt.Sprintf("%d: %v", i, task.body_content))
+			}
 		case 'd':
 			to_delete, err := strconv.ParseInt(opt.Value, 10, 64)
 			if err != nil {
@@ -67,13 +80,4 @@ func readInTask(reader *bufio.Reader, due_date time.Time) {
 	}
 	text := string(bytes)
 	AddTask(text, due_date)
-}
-
-// Print the tasks from ~/.todo to do today
-func printTasksToday(tasks []Task) {
-	for i, task := range tasks {
-		if task.DueToday() {
-			fmt.Println(fmt.Sprintf("%d: %v", i, task.body_content))
-		}
-	}
 }
