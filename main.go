@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -20,12 +21,20 @@ const help_message = "Usage of todo:\n" +
 	"  -d <value> Delete a task by index number\n"
 
 func main() {
-	opts, _, err := getopt.Getopts(os.Args[1:], "hld:")
+	opts, others, err := getopt.Getopts(os.Args[1:], "hlt:d:")
 	if err != nil {
 		panic(err)
 	}
+	due_date := time.Now()
+	date_set := false
 	for _, opt := range opts {
 		switch opt.Option {
+		case 't':
+			due_date, err = time.Parse("2006/01/02", opt.Value)
+			if err != nil {
+				panic(err)
+			}
+			date_set = true
 		case 'h':
 			fmt.Printf(help_message)
 			return
@@ -39,15 +48,15 @@ func main() {
 			delete_task(int(to_delete))
 		}
 	}
-	if len(opts) > 0 {
+	if len(opts) > 0 && !date_set {
 		return
 	}
 	if len(os.Args) > 1 {
-		input := strings.Join(os.Args[1:], " ")
-		add_task(input)
+		input := strings.Join(os.Args[others+1:], " ")
+		add_task(input, due_date)
 	} else {
 		reader := bufio.NewReader(os.Stdin)
-		read_in_task(reader)
+		read_in_task(reader, due_date)
 	}
 }
 
@@ -65,17 +74,17 @@ func get_path() string {
 }
 
 // Read a task in from a reader and pass it off to add_task.
-func read_in_task(reader *bufio.Reader) {
+func read_in_task(reader *bufio.Reader, due_date time.Time) {
 	bytes, err := ioutil.ReadAll(reader)
 	if err != nil {
 		panic(err)
 	}
 	text := string(bytes)
-	add_task(text)
+	add_task(text, due_date)
 }
 
 // Add a task with the given body.
-func add_task(text string) {
+func add_task(text string, due_date time.Time) {
 	root := get_path()
 	if !utf8.ValidString(text) {
 		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
@@ -122,7 +131,9 @@ func delete_task(task_index int) {
 // Print the tasks from ~/.todo
 func print_tasks(tasks []Task) {
 	for i, task := range tasks {
-		fmt.Println(fmt.Sprintf("%d: %v", i, task.body_content))
+		if task.due_today() {
+			fmt.Println(fmt.Sprintf("%d: %v", i, task.body_content))
+		}
 	}
 }
 
