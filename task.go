@@ -39,6 +39,7 @@ func AddTask(text string, due_date time.Time) {
 	save_path := path.Join(root, fmt.Sprintf("%x", sha.Sum(nil))+".todo")
 	if _, err := os.Stat(save_path); !os.IsNotExist(err) {
 		fmt.Println("You have already made that a task")
+		// TODO proper error messages
 		os.Exit(1)
 	}
 	var task Task
@@ -55,10 +56,12 @@ func DeleteTask(task_index int) {
 	tasks := GetTasks()
 	if task_index < 0 {
 		fmt.Println("Index must be non-negative")
+		// TODO Do proper error handling
 		os.Exit(1)
 	}
 	if task_index >= len(tasks) {
 		fmt.Println("Index too large")
+		// TODO Do proper error handling
 		os.Exit(1)
 	}
 	fmt.Printf("%d: %v\n", task_index, tasks[task_index].body_content)
