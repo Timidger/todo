@@ -40,7 +40,7 @@ func main() {
 			fmt.Printf(help_message)
 			return
 		case 'l':
-			print_tasks(get_tasks())
+			print_tasks_today(get_tasks())
 		case 'd':
 			to_delete, err := strconv.ParseInt(opt.Value, 10, 64)
 			if err != nil {
@@ -129,8 +129,8 @@ func delete_task(task_index int) {
 	tasks = append(tasks[:task_index], tasks[task_index+1:]...)
 }
 
-// Print the tasks from ~/.todo
-func print_tasks(tasks []Task) {
+// Print the tasks from ~/.todo to do today
+func print_tasks_today(tasks []Task) {
 	for i, task := range tasks {
 		if task.due_today() {
 			fmt.Println(fmt.Sprintf("%d: %v", i, task.body_content))
