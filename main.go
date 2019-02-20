@@ -17,6 +17,8 @@ const help_message = "Usage of todo:\n" +
 	"  -d <value>    Delete a task by index number\n" +
 	"  -t YYYY/MM/DD Delay the task until the date\n"
 
+const TIME_FORMAT = "2006/01/02"
+
 func main() {
 	opts, others, err := getopt.Getopts(os.Args[1:], "hlt:d:")
 	if err != nil {
@@ -27,7 +29,7 @@ func main() {
 	for _, opt := range opts {
 		switch opt.Option {
 		case 't':
-			due_date, err = time.Parse("2006/01/02", opt.Value)
+			due_date, err = time.Parse(TIME_FORMAT, opt.Value)
 			if err != nil {
 				panic(err)
 			}
