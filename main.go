@@ -88,8 +88,7 @@ func main() {
 	if len(opts) > 0 && !date_set {
 		return
 	}
-	if len(os.Args) > 1 {
-		input := strings.Join(os.Args[others+1:], " ")
+	if input := strings.Join(os.Args[others+1:], " "); len(os.Args) > 1 && input != "" {
 		AddTask(input, due_date)
 	} else {
 		reader := bufio.NewReader(os.Stdin)
