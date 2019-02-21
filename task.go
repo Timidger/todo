@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -21,6 +22,41 @@ type Task struct {
 	due_date time.Time
 	// TODO REMOVE. This is a stupid hack.
 	file_name string
+}
+
+// TODO Surely this an interface...
+// Format a task
+func (task *Task) FormatTask() string {
+	format_string := "%-40v\t%v"
+	if task.DueBeforeToday() {
+		format_string = RED + format_string + RESET
+	}
+	return fmt.Sprintf(format_string,
+		task.body_content, task.due_date.Format(TIME_FORMAT))
+}
+
+// Determines if a task is due today (or any days before today)
+func (task *Task) DueToday() bool {
+	return task.due_date.Before(time.Now())
+}
+
+/// Determines if a task is due before today.
+func (task *Task) DueBeforeToday() bool {
+	now := time.Now()
+	day := string(strconv.Itoa(now.Day()))
+	month := string(strconv.Itoa(int(now.Month())))
+	if now.Day() < 10 {
+		day = "0" + day
+	}
+	if now.Month() < 10 {
+		month = "0" + month
+	}
+	today, err := time.Parse(TIME_FORMAT,
+		fmt.Sprintf("%v/%v/%v EST", now.Year(), month, day))
+	if err != nil {
+		panic(err)
+	}
+	return task.due_date.Before(today)
 }
 
 // Adds a task with the given text and due time
@@ -109,11 +145,6 @@ func GetTasks() []Task {
 		panic(err)
 	}
 	return tasks
-}
-
-// Determines if a task is due today (or any days before today)
-func (task *Task) DueToday() bool {
-	return task.due_date.Before(time.Now())
 }
 
 func getPath() string {

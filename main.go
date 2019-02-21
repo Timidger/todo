@@ -19,6 +19,8 @@ const help_message = "Usage of todo:\n" +
 	"  -t YYYY/MM/DD Delay the task until the date\n"
 
 const TIME_FORMAT = "2006/01/02 MST"
+const RED = "\x1b[31m"
+const RESET = "\x1b[39m"
 
 // TODO I'm trying to encode an enum but this feels gross
 const (
@@ -51,7 +53,7 @@ func main() {
 			i := 0
 			for _, task := range tasks {
 				if task.DueToday() {
-					fmt.Println(fmt.Sprintf("%d: %v", i, task.body_content))
+					fmt.Printf("%d: %s\n", i, task.FormatTask())
 					i++
 				}
 			}
@@ -59,8 +61,7 @@ func main() {
 			listing = LISTING_ALL
 			tasks := GetTasks()
 			for i, task := range tasks {
-				fmt.Println(fmt.Sprintf("%d: %-40v\t%v",
-					i, task.body_content, task.due_date.Format(TIME_FORMAT)))
+				fmt.Printf("%d: %s\n", i, task.FormatTask())
 			}
 		case 'd':
 			to_delete, err := strconv.ParseInt(opt.Value, 10, 64)
