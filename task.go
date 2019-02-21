@@ -25,14 +25,23 @@ type Task struct {
 }
 
 // TODO Surely this an interface...
-// Format a task
-func (task *Task) FormatTask() string {
+// Format a task with the day included
+func (task *Task) FormatTaskDay() string {
 	format_string := "%-40v\t%v"
 	if task.DueBeforeToday() {
 		format_string = RED + format_string + RESET
 	}
 	return fmt.Sprintf(format_string,
 		task.body_content, task.due_date.Format(TIME_FORMAT))
+}
+
+// Format just the task body
+func (task *Task) FormatTask() string {
+	format_string := "%-40v"
+	if task.DueBeforeToday() {
+		format_string = RED + format_string + RESET
+	}
+	return fmt.Sprintf(format_string, task.body_content)
 }
 
 // Determines if a task is due today (or any days before today)
@@ -95,7 +104,7 @@ func AddTask(text string, due_date time.Time) {
 }
 
 /// Deletes a task by index
-func DeleteTask(tasks []Task, task_index int) {
+func DeleteTask(tasks []Task, task_index int) *Task {
 	if task_index < 0 {
 		fmt.Println("Index must be non-negative")
 		// TODO Do proper error handling
@@ -106,11 +115,12 @@ func DeleteTask(tasks []Task, task_index int) {
 		// TODO Do proper error handling
 		os.Exit(1)
 	}
-	fmt.Printf("%d: %v\n", task_index, tasks[task_index].body_content)
 	if err := os.Remove(tasks[task_index].file_name); err != nil {
 		panic(err)
 	}
+	task := tasks[task_index]
 	tasks = append(tasks[:task_index], tasks[task_index+1:]...)
+	return &task
 }
 
 func GetTasks() []Task {

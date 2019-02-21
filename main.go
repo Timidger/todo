@@ -19,8 +19,11 @@ const help_message = "Usage of todo:\n" +
 	"  -t YYYY/MM/DD Delay the task until the date\n"
 
 const TIME_FORMAT = "2006/01/02 MST"
-const RED = "\x1b[31m"
-const RESET = "\x1b[39m"
+const (
+	RED   = "\x1b[31m"
+	GREEN = "\x1b[32m"
+	RESET = "\x1b[39m"
+)
 
 // TODO I'm trying to encode an enum but this feels gross
 const (
@@ -61,17 +64,19 @@ func main() {
 			listing = LISTING_ALL
 			tasks := GetTasks()
 			for i, task := range tasks {
-				fmt.Printf("%d: %s\n", i, task.FormatTask())
+				fmt.Printf("%d: %s\n", i, task.FormatTaskDay())
 			}
 		case 'd':
 			to_delete, err := strconv.ParseInt(opt.Value, 10, 64)
 			if err != nil {
 				panic(err)
 			}
+			index := int(to_delete)
 			switch listing {
 			case LISTING_ALL:
 				tasks := GetTasks()
-				DeleteTask(tasks, int(to_delete))
+				task_deleted := DeleteTask(tasks, index)
+				fmt.Printf(GREEN+"%d: %s"+RESET+"\n", index, task_deleted.FormatTaskDay())
 			case LISTING_TODAY:
 				tasks_ := GetTasks()
 				tasks := make([]Task, 0)
@@ -80,7 +85,8 @@ func main() {
 						tasks = append(tasks, task)
 					}
 				}
-				DeleteTask(tasks, int(to_delete))
+				task_deleted := DeleteTask(tasks, index)
+				fmt.Printf(GREEN+"%d: %s"+RESET+"\n", index, task_deleted.FormatTask())
 			default:
 				panic(fmt.Sprintf("Unknown flag %v", listing))
 			}
