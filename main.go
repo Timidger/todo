@@ -18,7 +18,7 @@ const help_message = "Usage of todo:\n" +
 	"  -d <value>    Delete a task by index number. If preceded by -a based on full list, not just today\n" +
 	"  -t YYYY/MM/DD Delay the task until the date\n"
 
-const TIME_FORMAT = "2006/01/02"
+const TIME_FORMAT = "2006/01/02 MST"
 
 // TODO I'm trying to encode an enum but this feels gross
 const (
@@ -37,7 +37,7 @@ func main() {
 	for _, opt := range opts {
 		switch opt.Option {
 		case 't':
-			due_date, err = time.Parse(TIME_FORMAT, opt.Value)
+			due_date, err = time.Parse(TIME_FORMAT, opt.Value+" EST")
 			if err != nil {
 				panic(err)
 			}
