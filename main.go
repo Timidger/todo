@@ -15,15 +15,14 @@ const help_message = "Usage of todo:\n" +
 	"  -h            Show this help message\n" +
 	"  -l            List the things to do today in no particular order\n" +
 	"  -a            List all the things to do, regardless of due date, in no particular order\n" +
-	"  -d <value>    Delete a task by index number. Needs -l or -a to precede it\n" +
+	"  -d <value>    Delete a task by index number. If preceded by -a based on full list, not just today\n" +
 	"  -t YYYY/MM/DD Delay the task until the date\n"
 
 const TIME_FORMAT = "2006/01/02"
 
 // TODO I'm trying to encode an enum but this feels gross
 const (
-	LISTING_NONE = iota
-	LISTING_ALL
+	LISTING_ALL = iota
 	LISTING_TODAY
 )
 
@@ -34,7 +33,7 @@ func main() {
 	}
 	due_date := time.Now()
 	date_set := false
-	listing := LISTING_NONE
+	listing := LISTING_TODAY
 	for _, opt := range opts {
 		switch opt.Option {
 		case 't':
@@ -68,19 +67,15 @@ func main() {
 				panic(err)
 			}
 			switch listing {
-			case LISTING_NONE:
-				panic("-d flag requires a -l or -a preceding it")
 			case LISTING_ALL:
 				tasks := GetTasks()
 				DeleteTask(tasks, int(to_delete))
 			case LISTING_TODAY:
-				tasks := GetTasks()
-				offset := 0
-				for index, task := range tasks[:] {
-					if !task.DueToday() {
-						index = index - offset
-						tasks = append(tasks[:index], tasks[index+1:]...)
-						offset++
+				tasks_ := GetTasks()
+				tasks := make([]Task, 0)
+				for _, task := range tasks_ {
+					if task.DueToday() {
+						tasks = append(tasks, task)
 					}
 				}
 				DeleteTask(tasks, int(to_delete))
