@@ -59,7 +59,8 @@ func main() {
 			listing = LISTING_ALL
 			tasks := GetTasks()
 			for i, task := range tasks {
-				fmt.Println(fmt.Sprintf("%d: %v", i, task.body_content))
+				fmt.Println(fmt.Sprintf("%d: %-40v\t%v",
+					i, task.body_content, task.due_date.Format(TIME_FORMAT)))
 			}
 		case 'd':
 			to_delete, err := strconv.ParseInt(opt.Value, 10, 64)
