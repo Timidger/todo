@@ -86,6 +86,8 @@ func main() {
 					}
 				}
 				task_deleted := DeleteTask(tasks, index)
+				// Hack to get around the coloration display
+				task_deleted.due_date = time.Now()
 				fmt.Printf(GREEN+"%d: %s"+RESET+"\n", index, task_deleted.FormatTask())
 			default:
 				panic(fmt.Sprintf("Unknown flag %v", listing))
