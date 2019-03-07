@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"git.sr.ht/~sircmpwn/getopt"
 	"io/ioutil"
-	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -67,7 +66,7 @@ func main() {
 				}
 				cur_weekday := int(due_date.Weekday())
 				if cur_weekday < relative_day {
-					due_date = due_date.AddDate(0, 0, int(math.Abs(float64(relative_day)-float64(cur_weekday))))
+					due_date = due_date.AddDate(0, 0, int(relative_day-cur_weekday))
 				} else {
 					due_date = due_date.AddDate(0, 0, relative_day+cur_weekday-1)
 				}
