@@ -32,7 +32,7 @@ func (task *Task) FormatTaskDay() string {
 		format_string = RED + format_string + RESET
 	}
 	return fmt.Sprintf(format_string,
-		task.body_content, task.due_date.Format(TIME_FORMAT))
+		task.body_content, task.due_date.Format(EXPLICIT_TIME_FORMAT))
 }
 
 // Format just the task body
@@ -60,7 +60,7 @@ func (task *Task) DueBeforeToday() bool {
 	if now.Month() < 10 {
 		month = "0" + month
 	}
-	today, err := time.Parse(TIME_FORMAT,
+	today, err := time.Parse(EXPLICIT_TIME_FORMAT,
 		fmt.Sprintf("%v/%v/%v EST", now.Year(), month, day))
 	if err != nil {
 		panic(err)
@@ -95,7 +95,7 @@ func AddTask(text string, due_date time.Time) {
 		panic(err)
 	}
 	defer new.Close()
-	if _, err := new.WriteString(fmt.Sprintf("%v\n", due_date.Format(TIME_FORMAT))); err != nil {
+	if _, err := new.WriteString(fmt.Sprintf("%v\n", due_date.Format(EXPLICIT_TIME_FORMAT))); err != nil {
 		panic(err)
 	}
 	if _, err := new.WriteString(task.body_content); err != nil {
@@ -142,7 +142,7 @@ func GetTasks() []Task {
 		if len(split) < 2 {
 			panic(fmt.Sprintf("Invalid format \"%v\"", string(bytes)))
 		}
-		task.due_date, err = time.Parse(TIME_FORMAT, split[0])
+		task.due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, split[0])
 		if err != nil {
 			panic(err)
 		}

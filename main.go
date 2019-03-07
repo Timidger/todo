@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"git.sr.ht/~sircmpwn/getopt"
 	"io/ioutil"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -18,7 +19,8 @@ const help_message = "Usage of todo:\n" +
 	"  -d <value>    Delete a task by index number. If preceded by -a based on full list, not just today\n" +
 	"  -t YYYY/MM/DD Delay the task until the date\n"
 
-const TIME_FORMAT = "2006/01/02 MST"
+const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
+const RELATIVE_TIME_FORMAT = "Monday MST"
 const (
 	RED   = "\x1b[31m"
 	GREEN = "\x1b[32m"
@@ -41,9 +43,34 @@ func main() {
 	for _, opt := range opts {
 		switch opt.Option {
 		case 't':
-			due_date, err = time.Parse(TIME_FORMAT, opt.Value+" EST")
+			due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, opt.Value+" EST")
 			if err != nil {
-				panic(err)
+				due_date = time.Now()
+				relative_day := 0
+				switch strings.Title(opt.Value) {
+				case "Sunday":
+					relative_day = 0
+				case "Monday":
+					relative_day = 1
+				case "Tuesday":
+					relative_day = 2
+				case "Wednesday":
+					relative_day = 3
+				case "Thursday":
+					relative_day = 4
+				case "Friday":
+					relative_day = 5
+				case "Saturday":
+					relative_day = 6
+				default:
+					panic(err)
+				}
+				cur_weekday := int(due_date.Weekday())
+				if cur_weekday < relative_day {
+					due_date = due_date.AddDate(0, 0, int(math.Abs(float64(relative_day)-float64(cur_weekday))))
+				} else {
+					due_date = due_date.AddDate(0, 0, relative_day+cur_weekday-1)
+				}
 			}
 			date_set = true
 		case 'h':
