@@ -25,7 +25,6 @@ const (
 	RESET = "\x1b[39m"
 )
 
-// TODO I'm trying to encode an enum but this feels gross
 const (
 	LISTING_ALL = iota
 	LISTING_TODAY
