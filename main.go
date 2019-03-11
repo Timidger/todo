@@ -68,7 +68,7 @@ func main() {
 				if cur_weekday < relative_day {
 					due_date = due_date.AddDate(0, 0, int(relative_day-cur_weekday))
 				} else {
-					due_date = due_date.AddDate(0, 0, relative_day+cur_weekday-1)
+					due_date = due_date.AddDate(0, 0, 7-(cur_weekday-relative_day))
 				}
 			}
 			date_set = true
