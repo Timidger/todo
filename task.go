@@ -61,7 +61,7 @@ func (task *Task) DueBeforeToday() bool {
 		month = "0" + month
 	}
 	today, err := time.Parse(EXPLICIT_TIME_FORMAT,
-		fmt.Sprintf("%v/%v/%v EST", now.Year(), month, day))
+		fmt.Sprintf("%v/%v/%v EDT", now.Year(), month, day))
 	if err != nil {
 		panic(err)
 	}

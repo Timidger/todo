@@ -42,7 +42,7 @@ func main() {
 	for _, opt := range opts {
 		switch opt.Option {
 		case 't':
-			due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, opt.Value+" EST")
+			due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, opt.Value+" EDT")
 			if err != nil {
 				due_date = time.Now()
 				relative_day := 0
