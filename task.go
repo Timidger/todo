@@ -43,22 +43,9 @@ func (task Task) String() string {
 	return task.body_content
 }
 
-// TODO Surely this an interface...
-// Format a task with the day included
-func (task *Task) FormatTaskDay() string {
-	format_string := "%-80v\t%v"
-	if task.DueBeforeToday() {
-		format_string = RED + format_string + RESET
-	} else if task.DueAfter(time.Now().AddDate(0, 0, 6)) {
-		format_string = GREY + format_string + RESET
-	}
-	return fmt.Sprintf(format_string,
-		task.body_content, task.due_date.Format(EXPLICIT_TIME_FORMAT))
-}
-
 // Format just the task body
 func (task *Task) FormatTask() string {
-	format_string := "%-80v"
+	format_string := "%v"
 	if task.DueBeforeToday() {
 		format_string = RED + format_string + RESET
 	} else if task.DueAfter(time.Now().AddDate(0, 0, 6)) {

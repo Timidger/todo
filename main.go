@@ -96,7 +96,7 @@ func main() {
 			for i, task := range tasks {
 				if i == 0 || cur_day != task.due_date {
 					cur_day = task.due_date
-					day_header := fmt.Sprintf("%-80v\t%v\n",
+					day_header := fmt.Sprintf("%-40v\t%v\n",
 						cur_day.Format("Monday")+":",
 						cur_day.Format(EXPLICIT_TIME_FORMAT))
 					if task.DueBeforeToday() {
@@ -118,7 +118,7 @@ func main() {
 			case LISTING_ALL:
 				tasks := GetTasks()
 				task_deleted := DeleteTask(tasks, index)
-				fmt.Printf(GREEN+"%d: %s"+RESET+"\n", index, task_deleted.FormatTaskDay())
+				fmt.Printf(GREEN+"%d: %s"+RESET+"\n", index, task_deleted.FormatTask())
 			case LISTING_TODAY:
 				tasks_ := GetTasks()
 				tasks := make([]Task, 0)
