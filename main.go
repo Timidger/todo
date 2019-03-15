@@ -93,15 +93,18 @@ func main() {
 				break
 			}
 			cur_day := tasks[0].due_date
-			fmt.Printf("%-80v\t%v\n",
-				cur_day.Format("Monday")+":",
-				cur_day.Format(EXPLICIT_TIME_FORMAT))
 			for i, task := range tasks {
-				if cur_day != task.due_date {
+				if i == 0 || cur_day != task.due_date {
 					cur_day = task.due_date
-					fmt.Printf("%-80v\t%v\n",
+					day_header := fmt.Sprintf("%-80v\t%v\n",
 						cur_day.Format("Monday")+":",
 						cur_day.Format(EXPLICIT_TIME_FORMAT))
+					if task.DueBeforeToday() {
+						day_header = RED + day_header + RESET
+					} else if task.DueAfter(time.Now().AddDate(0, 0, 6)) {
+						day_header = GREY + day_header + RESET
+					}
+					fmt.Printf(day_header)
 				}
 				fmt.Printf("%d:\t%s\n", i, task.FormatTask())
 			}
