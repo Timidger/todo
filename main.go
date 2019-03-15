@@ -89,8 +89,21 @@ func main() {
 		case 'a':
 			listing = LISTING_ALL
 			tasks := GetTasks()
+			if len(tasks) < 0 {
+				break
+			}
+			cur_day := tasks[0].due_date
+			fmt.Printf("%-80v\t%v\n",
+				cur_day.Format("Monday")+":",
+				cur_day.Format(EXPLICIT_TIME_FORMAT))
 			for i, task := range tasks {
-				fmt.Printf("%d: %s\n", i, task.FormatTaskDay())
+				if cur_day != task.due_date {
+					cur_day = task.due_date
+					fmt.Printf("%-80v\t%v\n",
+						cur_day.Format("Monday")+":",
+						cur_day.Format(EXPLICIT_TIME_FORMAT))
+				}
+				fmt.Printf("%d:\t%s\n", i, task.FormatTask())
 			}
 		case 'd':
 			to_delete, err := strconv.ParseInt(opt.Value, 10, 64)
