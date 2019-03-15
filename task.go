@@ -49,6 +49,8 @@ func (task *Task) FormatTaskDay() string {
 	format_string := "%-40v\t%v"
 	if task.DueBeforeToday() {
 		format_string = RED + format_string + RESET
+	} else if task.DueAfter(time.Now().AddDate(0, 0, 6)) {
+		format_string = GREY + format_string + RESET
 	}
 	return fmt.Sprintf(format_string,
 		task.body_content, task.due_date.Format(EXPLICIT_TIME_FORMAT))
@@ -59,6 +61,8 @@ func (task *Task) FormatTask() string {
 	format_string := "%-40v"
 	if task.DueBeforeToday() {
 		format_string = RED + format_string + RESET
+	} else if task.DueAfter(time.Now().AddDate(0, 0, 6)) {
+		format_string = GREY + format_string + RESET
 	}
 	return fmt.Sprintf(format_string, task.body_content)
 }
@@ -85,6 +89,10 @@ func (task *Task) DueBeforeToday() bool {
 		panic(err)
 	}
 	return task.due_date.Before(today)
+}
+
+func (task *Task) DueAfter(after time.Time) bool {
+	return task.due_date.After(after)
 }
 
 // Adds a task with the given text and due time

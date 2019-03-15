@@ -21,6 +21,7 @@ const help_message = "Usage of todo:\n" +
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
 const RELATIVE_TIME_FORMAT = "Monday MST"
 const (
+	GREY  = "\x1b[90m"
 	RED   = "\x1b[31m"
 	GREEN = "\x1b[32m"
 	RESET = "\x1b[39m"
