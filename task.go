@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -22,6 +23,24 @@ type Task struct {
 	due_date time.Time
 	// TODO REMOVE. This is a stupid hack.
 	file_name string
+}
+
+type Tasks []Task
+
+func (tasks Tasks) Len() int {
+	return len(tasks)
+}
+
+func (tasks Tasks) Less(i, j int) bool {
+	return tasks[i].due_date.Before(tasks[j].due_date)
+}
+
+func (tasks Tasks) Swap(i, j int) {
+	tasks[i], tasks[j] = tasks[j], tasks[i]
+}
+
+func (task Task) String() string {
+	return task.body_content
 }
 
 // TODO Surely this an interface...
@@ -123,9 +142,10 @@ func DeleteTask(tasks []Task, task_index int) *Task {
 	return &task
 }
 
+/// Gets tasks ordered by time
 func GetTasks() []Task {
 	root := getPath()
-	var tasks []Task
+	var tasks Tasks
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
 		if path == root {
 			return nil
@@ -154,6 +174,7 @@ func GetTasks() []Task {
 	if err != nil {
 		panic(err)
 	}
+	sort.Sort(tasks)
 	return tasks
 }
 
