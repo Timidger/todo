@@ -48,6 +48,7 @@ func main() {
 			if err != nil {
 				due_date = time.Now()
 				relative_day := 0
+				cur_weekday := int(due_date.Weekday())
 				switch strings.Title(opt.Value) {
 				case "Sunday":
 					relative_day = 0
@@ -63,10 +64,11 @@ func main() {
 					relative_day = 5
 				case "Saturday":
 					relative_day = 6
+				case "Tomorrow":
+					relative_day = (cur_weekday + 1) % 7
 				default:
 					panic(err)
 				}
-				cur_weekday := int(due_date.Weekday())
 				if cur_weekday < relative_day {
 					due_date = due_date.AddDate(0, 0, int(relative_day-cur_weekday))
 				} else {
