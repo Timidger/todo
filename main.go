@@ -16,6 +16,7 @@ const help_message = "Usage of todo:\n" +
 	"  -l            List the things to do today in no particular order\n" +
 	"  -a            List all the things to do, regardless of due date, in no particular order\n" +
 	"  -d <value>    Delete a task by index number. If preceded by -a based on full list, not just today\n" +
+	"  -x <value>    Delay a task by one day. It is suggested you don't do this too often\n" +
 	"  -t YYYY/MM/DD Delay the task until the date. Can also use relative days such as \"Monday\"\n"
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
@@ -33,7 +34,7 @@ const (
 )
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args[1:], "halt:d:")
+	opts, others, err := getopt.Getopts(os.Args[1:], "halt:d:x:")
 	if err != nil {
 		panic(err)
 	}
@@ -133,6 +134,27 @@ func main() {
 				fmt.Printf(GREEN+"%d: %s"+RESET+"\n", index, task_deleted.FormatTask())
 			default:
 				panic(fmt.Sprintf("Unknown flag %v", listing))
+			}
+		case 'x':
+			to_delay, err := strconv.ParseInt(opt.Value, 10, 64)
+			if err != nil {
+				panic(err)
+			}
+			index := int(to_delay)
+			switch listing {
+			case LISTING_ALL:
+				panic("Not yet implemented")
+			case LISTING_TODAY:
+				tasks_ := GetTasks()
+				// TODO Duplicate code
+				tasks := make([]Task, 0)
+				for _, task := range tasks_ {
+					if task.DueToday() {
+						tasks = append(tasks, task)
+					}
+				}
+				task_removed := DeleteTask(tasks, index)
+				AddTask(task_removed.body_content, task_removed.due_date.AddDate(0, 0, 1))
 			}
 		}
 	}
