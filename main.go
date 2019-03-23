@@ -12,12 +12,13 @@ import (
 )
 
 const help_message = "Usage of todo:\n" +
-	"  -h            Show this help message\n" +
-	"  -l            List the things to do today in no particular order\n" +
-	"  -a            List all the things to do, regardless of due date, in no particular order\n" +
-	"  -d <value>    Delete a task by index number. If preceded by -a based on full list, not just today\n" +
-	"  -x <value>    Delay a task by one day. It is suggested you don't do this too often\n" +
-	"  -t YYYY/MM/DD Delay the task until the date. Can also use relative days such as \"Monday\"\n"
+	"  -h          Show this help message\n" +
+	"  -l          List the things to do today in no particular order\n" +
+	"  -a          List all the things to do, regardless of due date, from soonest to latest\n" +
+	"  -d <index>  Delete a task by index number. If preceded by -a based on full list, not just today\n" +
+	"  -x <index>  Delay a task by one day. It is suggested you don't do this too often\n" +
+	"  -t <date>   Delay the task until the date.\n" +
+	"              Date uses YYYY/MM/DD. Relative days such as \"Monday\" or \"Tomorrow\" are also supported\n"
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
 const RELATIVE_TIME_FORMAT = "Monday MST"
