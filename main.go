@@ -121,13 +121,7 @@ func main() {
 				task_deleted := DeleteTask(tasks, index)
 				fmt.Printf(GREEN+"%d: %s"+RESET+"\n", index, task_deleted.FormatTask())
 			case LISTING_TODAY:
-				tasks_ := GetTasks()
-				tasks := make([]Task, 0)
-				for _, task := range tasks_ {
-					if task.DueToday() {
-						tasks = append(tasks, task)
-					}
-				}
+				tasks := GetTasksToday()
 				task_deleted := DeleteTask(tasks, index)
 				// Hack to get around the coloration display
 				task_deleted.due_date = time.Now()
@@ -145,14 +139,7 @@ func main() {
 			case LISTING_ALL:
 				panic("Not yet implemented")
 			case LISTING_TODAY:
-				tasks_ := GetTasks()
-				// TODO Duplicate code
-				tasks := make([]Task, 0)
-				for _, task := range tasks_ {
-					if task.DueToday() {
-						tasks = append(tasks, task)
-					}
-				}
+				tasks := GetTasksToday()
 				task_removed := DeleteTask(tasks, index)
 				AddTask(task_removed.body_content, task_removed.due_date.AddDate(0, 0, 1))
 			}

@@ -173,6 +173,18 @@ func GetTasks() []Task {
 	return tasks
 }
 
+/// Gets tasks due today.
+func GetTasksToday() []Task {
+	tasks_ := GetTasks()
+	tasks := make([]Task, 0)
+	for _, task := range tasks_ {
+		if task.DueToday() {
+			tasks = append(tasks, task)
+		}
+	}
+	return tasks
+}
+
 func getPath() string {
 	home := os.Getenv("HOME")
 	root := path.Join(home, ".todo/")
