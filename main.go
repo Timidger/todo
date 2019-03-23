@@ -143,7 +143,9 @@ func main() {
 				tasks = GetTasksToday()
 			}
 			task_removed := DeleteTask(tasks, index)
-			AddTask(task_removed.body_content, task_removed.due_date.AddDate(0, 0, 1))
+			new_date := task_removed.due_date.AddDate(0, 0, 1)
+			AddTask(task_removed.body_content, new_date)
+			fmt.Printf(RED+"Task \"%s\" delayed until %s"+RESET+"\n", task_removed.FormatTask(), new_date.Weekday())
 		}
 	}
 	if len(opts) > 0 && !date_set {
