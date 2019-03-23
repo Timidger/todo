@@ -16,7 +16,7 @@ const help_message = "Usage of todo:\n" +
 	"  -l            List the things to do today in no particular order\n" +
 	"  -a            List all the things to do, regardless of due date, in no particular order\n" +
 	"  -d <value>    Delete a task by index number. If preceded by -a based on full list, not just today\n" +
-	"  -t YYYY/MM/DD Delay the task until the date\n"
+	"  -t YYYY/MM/DD Delay the task until the date. Can also use relative days such as \"Monday\"\n"
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
 const RELATIVE_TIME_FORMAT = "Monday MST"
