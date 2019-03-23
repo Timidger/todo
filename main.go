@@ -135,14 +135,15 @@ func main() {
 				panic(err)
 			}
 			index := int(to_delay)
+			var tasks []Task
 			switch listing {
 			case LISTING_ALL:
-				panic("Not yet implemented")
+				tasks = GetTasks()
 			case LISTING_TODAY:
-				tasks := GetTasksToday()
-				task_removed := DeleteTask(tasks, index)
-				AddTask(task_removed.body_content, task_removed.due_date.AddDate(0, 0, 1))
+				tasks = GetTasksToday()
 			}
+			task_removed := DeleteTask(tasks, index)
+			AddTask(task_removed.body_content, task_removed.due_date.AddDate(0, 0, 1))
 		}
 	}
 	if len(opts) > 0 && !date_set {
