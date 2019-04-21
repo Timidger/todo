@@ -117,7 +117,7 @@ func main() {
 					no_deadlines = true
 					continue
 				}
-				if i == 0 || cur_day != task.due_date {
+				if i == 0 || !cur_day.Equal(*task.due_date) {
 					cur_day = task.due_date
 					day_header := fmt.Sprintf("%-40v\t%v\n",
 						cur_day.Format("Monday")+":",
