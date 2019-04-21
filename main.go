@@ -41,9 +41,10 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	directory_path = path.Join(os.Getenv("HOME"), ".todo/")
+	var manager TaskManager
+	manager.storage_directory = path.Join(os.Getenv("HOME"), ".todo/")
 	due_date := time.Now()
-	read_operation := false
+	skip_task_read := false
 	listing := LISTING_TODAY
 	for _, opt := range opts {
 		switch opt.Option {
@@ -84,8 +85,8 @@ func main() {
 			return
 		case 'l':
 			listing = LISTING_TODAY
-			read_operation = true
-			tasks := GetTasks()
+			skip_task_read = true
+			tasks := manager.GetTasks()
 			i := 0
 			for _, task := range tasks {
 				if task.DueToday() {
@@ -95,8 +96,8 @@ func main() {
 			}
 		case 'a':
 			listing = LISTING_ALL
-			read_operation = true
-			tasks := GetTasks()
+			skip_task_read = true
+			tasks := manager.GetTasks()
 			if len(tasks) < 0 {
 				break
 			}
@@ -117,6 +118,7 @@ func main() {
 				fmt.Printf("%d:\t%s\n", i, task.FormatTask())
 			}
 		case 'd':
+			skip_task_read = true
 			to_delete, err := strconv.ParseInt(opt.Value, 10, 64)
 			if err != nil {
 				panic(err)
@@ -124,12 +126,12 @@ func main() {
 			index := int(to_delete)
 			switch listing {
 			case LISTING_ALL:
-				tasks := GetTasks()
-				task_deleted := DeleteTask(tasks, index)
+				tasks := manager.GetTasks()
+				task_deleted := manager.DeleteTask(tasks, index)
 				fmt.Printf(GREEN+"%d: %s"+RESET+"\n", index, task_deleted.FormatTask())
 			case LISTING_TODAY:
-				tasks := GetTasksToday()
-				task_deleted := DeleteTask(tasks, index)
+				tasks := manager.GetTasksToday()
+				task_deleted := manager.DeleteTask(tasks, index)
 				// Hack to get around the coloration display
 				task_deleted.due_date = time.Now()
 				fmt.Printf(GREEN+"%d: %s"+RESET+"\n", index, task_deleted.FormatTask())
@@ -137,6 +139,7 @@ func main() {
 				panic(fmt.Sprintf("Unknown flag %v", listing))
 			}
 		case 'x':
+			skip_task_read = true
 			to_delay, err := strconv.ParseInt(opt.Value, 10, 64)
 			if err != nil {
 				panic(err)
@@ -145,36 +148,36 @@ func main() {
 			var tasks []Task
 			switch listing {
 			case LISTING_ALL:
-				tasks = GetTasks()
+				tasks = manager.GetTasks()
 			case LISTING_TODAY:
-				tasks = GetTasksToday()
+				tasks = manager.GetTasksToday()
 			}
-			task_removed := DeleteTask(tasks, index)
+			task_removed := manager.DeleteTask(tasks, index)
 			new_date := task_removed.due_date.AddDate(0, 0, 1)
-			AddTask(task_removed.body_content, new_date)
+			manager.AddTask(task_removed.body_content, new_date)
 			fmt.Printf(RED+"Task \"%s\" delayed until %s"+RESET+"\n",
 				task_removed.FormatTask(), new_date.Weekday())
 		case 'D':
-			directory_path = opt.Value
+			manager.storage_directory = opt.Value
 		}
 	}
-	if len(opts) > 0 && read_operation {
+	if len(opts) > 0 && skip_task_read {
 		return
 	}
 	if input := strings.Join(os.Args[others+1:], " "); len(os.Args) > 1 && input != "" {
-		AddTask(input, due_date)
+		manager.AddTask(input, due_date)
 	} else {
 		reader := bufio.NewReader(os.Stdin)
-		readInTask(reader, due_date)
+		manager.AddTask(readInTask(reader), due_date)
 	}
 }
 
 // Read a task in from a reader and pass it off to add_task.
-func readInTask(reader *bufio.Reader, due_date time.Time) {
+func readInTask(reader *bufio.Reader) string {
 	bytes, err := ioutil.ReadAll(reader)
 	if err != nil {
 		panic(err)
 	}
 	text := string(bytes)
-	AddTask(text, due_date)
+	return text
 }
