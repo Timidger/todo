@@ -98,7 +98,7 @@ func main() {
 			listing = LISTING_ALL
 			skip_task_read = true
 			tasks := manager.GetTasks()
-			if len(tasks) < 0 {
+			if len(tasks) == 0 {
 				break
 			}
 			cur_day := tasks[0].due_date
