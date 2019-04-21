@@ -20,7 +20,10 @@ func (tasks Tasks) Len() int {
 }
 
 func (tasks Tasks) Less(i, j int) bool {
-	return tasks[i].due_date.Before(tasks[j].due_date)
+	if tasks[i].due_date == nil || tasks[j].due_date == nil {
+		return false
+	}
+	return tasks[i].due_date.Before(*tasks[j].due_date)
 }
 
 func (tasks Tasks) Swap(i, j int) {
@@ -31,7 +34,7 @@ type TaskManager struct {
 	storage_directory string
 }
 
-func (manager *TaskManager) AddTask(text string, due_date time.Time) {
+func (manager *TaskManager) AddTask(text string, due_date *time.Time) *Task {
 	create_dir(manager.storage_directory)
 	root := manager.storage_directory
 	if !utf8.ValidString(text) {
@@ -39,7 +42,7 @@ func (manager *TaskManager) AddTask(text string, due_date time.Time) {
 	}
 	text = strings.TrimSuffix(text, "\n")
 	if text == "" {
-		return
+		return nil
 	}
 	// TODO Get a better name scheme
 	sha := sha1.New()
@@ -58,12 +61,15 @@ func (manager *TaskManager) AddTask(text string, due_date time.Time) {
 		panic(err)
 	}
 	defer new.Close()
-	if _, err := new.WriteString(fmt.Sprintf("%v\n", due_date.Format(EXPLICIT_TIME_FORMAT))); err != nil {
-		panic(err)
+	if due_date != nil {
+		if _, err := new.WriteString(fmt.Sprintf("%v\n", due_date.Format(EXPLICIT_TIME_FORMAT))); err != nil {
+			panic(err)
+		}
 	}
 	if _, err := new.WriteString(task.body_content); err != nil {
 		panic(err)
 	}
+	return &task
 }
 
 /// Deletes a task by index
@@ -128,6 +134,7 @@ func (manager *TaskManager) GetTasks() Tasks {
 			return nil
 		}
 		var task Task
+		task.file_name = path
 		bytes, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
@@ -136,15 +143,13 @@ func (manager *TaskManager) GetTasks() Tasks {
 			panic(fmt.Sprintf("Invalid UTF-8 string: %v", bytes))
 		}
 		split := strings.SplitN(string(bytes), "\n", 2)
-		if len(split) < 2 {
-			panic(fmt.Sprintf("Invalid format \"%v\"", string(bytes)))
-		}
-		task.due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, split[0])
+		due_date, err := time.Parse(EXPLICIT_TIME_FORMAT, split[0])
 		if err != nil {
-			panic(err)
+			task.body_content = string(bytes)
+		} else {
+			task.due_date = &due_date
+			task.body_content = split[1]
 		}
-		task.body_content = split[1]
-		task.file_name = path
 		tasks = append(tasks, task)
 		return nil
 	})

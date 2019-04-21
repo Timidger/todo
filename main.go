@@ -23,6 +23,8 @@ const help_message = "Usage of todo:\n" +
 	"  -c <category>   Specify a category\n" +
 	"  -C <category>   Create a new category\n" +
 	"  -L              List all the categories\n" +
+	"  -n              Don't have a deadline for this task\n" +
+	"                  Note that todos with no deadline only appear with -a\n" +
 	"  -D <directory>  Specify a custom todo directory (default is ~/.todo)\n"
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
@@ -40,21 +42,25 @@ const (
 )
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args[1:], "Lhalt:d:x:D:C:c:")
+	opts, others, err := getopt.Getopts(os.Args[1:], "nLhalt:d:x:D:C:c:")
 	if err != nil {
 		panic(err)
 	}
 	var manager TaskManager
 	manager.storage_directory = path.Join(os.Getenv("HOME"), ".todo/")
-	due_date := time.Now()
+	now := time.Now()
+	due_date := &now
 	skip_task_read := false
 	listing := LISTING_TODAY
 	for _, opt := range opts {
 		switch opt.Option {
 		case 't':
-			due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, opt.Value+" EDT")
+			if due_date == nil {
+				due_date = &now
+			}
+			*due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, opt.Value+" EDT")
 			if err != nil {
-				due_date = time.Now()
+				*due_date = time.Now()
 				relative_day := 0
 				cur_weekday := int(due_date.Weekday())
 				switch strings.Title(opt.Value) {
@@ -78,9 +84,9 @@ func main() {
 					panic(err)
 				}
 				if cur_weekday < relative_day {
-					due_date = due_date.AddDate(0, 0, int(relative_day-cur_weekday))
+					*due_date = due_date.AddDate(0, 0, int(relative_day-cur_weekday))
 				} else {
-					due_date = due_date.AddDate(0, 0, 7-(cur_weekday-relative_day))
+					*due_date = due_date.AddDate(0, 0, 7-(cur_weekday-relative_day))
 				}
 			}
 		case 'h':
@@ -105,7 +111,12 @@ func main() {
 				break
 			}
 			cur_day := tasks[0].due_date
+			no_deadlines := false
 			for i, task := range tasks {
+				if task.due_date == nil {
+					no_deadlines = true
+					continue
+				}
 				if i == 0 || cur_day != task.due_date {
 					cur_day = task.due_date
 					day_header := fmt.Sprintf("%-40v\t%v\n",
@@ -119,6 +130,14 @@ func main() {
 					fmt.Printf(day_header)
 				}
 				fmt.Printf("%d:\t%s\n", i, task.FormatTask())
+			}
+			if no_deadlines {
+				fmt.Printf(GREY + "No Deadline:" + RESET + "\n")
+				for i, task := range tasks {
+					if task.due_date == nil {
+						fmt.Printf(GREY+"%d:\t%s"+RESET+"\n", i, task.FormatTask())
+					}
+				}
 			}
 		case 'd':
 			skip_task_read = true
@@ -136,7 +155,7 @@ func main() {
 				tasks := manager.GetTasksToday()
 				task_deleted := manager.DeleteTask(tasks, index)
 				// Hack to get around the coloration display
-				task_deleted.due_date = time.Now()
+				task_deleted.due_date = &now
 				fmt.Printf(GREEN+"%d: %s"+RESET+"\n", index, task_deleted.FormatTask())
 			default:
 				panic(fmt.Sprintf("Unknown flag %v", listing))
@@ -157,7 +176,7 @@ func main() {
 			}
 			task_removed := manager.DeleteTask(tasks, index)
 			new_date := task_removed.due_date.AddDate(0, 0, 1)
-			manager.AddTask(task_removed.body_content, new_date)
+			manager.AddTask(task_removed.body_content, &new_date)
 			fmt.Printf(RED+"Task \"%s\" delayed until %s"+RESET+"\n",
 				task_removed.FormatTask(), new_date.Weekday())
 		case 'D':
@@ -179,6 +198,8 @@ func main() {
 			for _, category := range categories {
 				fmt.Printf("%s\n", category)
 			}
+		case 'n':
+			due_date = nil
 		}
 
 	}
