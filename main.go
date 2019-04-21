@@ -20,6 +20,8 @@ const help_message = "Usage of todo:\n" +
 	"  -x <index>      Delay a task by one day. It is suggested you don't do this too often\n" +
 	"  -t <date>       Delay the task until the date\n" +
 	"                  Date uses YYYY/MM/DD. Relative days such as \"Monday\" or \"Tomorrow\" are also supported\n" +
+	"  -c <category>   Specify a category\n" +
+	"  -C <category>   Create a new category\n" +
 	"  -D <directory>  Specify a custom todo directory (default is ~/.todo)\n"
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
@@ -37,7 +39,7 @@ const (
 )
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args[1:], "halt:d:x:D:")
+	opts, others, err := getopt.Getopts(os.Args[1:], "halt:d:x:D:C:c:")
 	if err != nil {
 		panic(err)
 	}
@@ -159,7 +161,19 @@ func main() {
 				task_removed.FormatTask(), new_date.Weekday())
 		case 'D':
 			manager.storage_directory = opt.Value
+		case 'c':
+			category := opt.Value
+			category_path := path.Join(manager.storage_directory, category)
+			if _, err := os.Stat(category_path); os.IsNotExist(err) {
+				fmt.Printf(RED+"Category \"%s\" does not exist"+RESET+"\n",
+					category)
+				os.Exit(1)
+			}
+			fallthrough
+		case 'C':
+			manager.storage_directory = path.Join(manager.storage_directory, opt.Value)
 		}
+
 	}
 	if len(opts) > 0 && skip_task_read {
 		return
