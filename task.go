@@ -14,6 +14,8 @@ import (
 	"unicode/utf8"
 )
 
+var directory_path string
+
 type Task struct {
 	// The "body" content of the task, in Markdown
 	body_content string
@@ -186,14 +188,12 @@ func GetTasksToday() []Task {
 }
 
 func getPath() string {
-	home := os.Getenv("HOME")
-	root := path.Join(home, ".todo/")
-	if _, err := os.Stat(root); os.IsNotExist(err) {
-		if err = os.Mkdir(root, 0700); err != nil {
+	if _, err := os.Stat(directory_path); os.IsNotExist(err) {
+		if err = os.Mkdir(directory_path, 0700); err != nil {
 			panic(err)
 		}
 	} else if err != nil {
 		panic(err)
 	}
-	return root
+	return directory_path
 }

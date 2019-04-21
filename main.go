@@ -6,19 +6,21 @@ import (
 	"git.sr.ht/~sircmpwn/getopt"
 	"io/ioutil"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 	"time"
 )
 
 const help_message = "Usage of todo:\n" +
-	"  -h          Show this help message\n" +
-	"  -l          List the things to do today in no particular order\n" +
-	"  -a          List all the things to do, regardless of due date, from soonest to latest\n" +
-	"  -d <index>  Delete a task by index number. If preceded by -a based on full list, not just today\n" +
-	"  -x <index>  Delay a task by one day. It is suggested you don't do this too often\n" +
-	"  -t <date>   Delay the task until the date.\n" +
-	"              Date uses YYYY/MM/DD. Relative days such as \"Monday\" or \"Tomorrow\" are also supported\n"
+	"  -h              Show this help message\n" +
+	"  -l              List the things to do today in no particular order\n" +
+	"  -a              List all the things to do, regardless of due date, from soonest to latest\n" +
+	"  -d <index>      Delete a task by index number. If preceded by -a based on full list, not just today\n" +
+	"  -x <index>      Delay a task by one day. It is suggested you don't do this too often\n" +
+	"  -t <date>       Delay the task until the date\n" +
+	"                  Date uses YYYY/MM/DD. Relative days such as \"Monday\" or \"Tomorrow\" are also supported\n" +
+	"  -D <directory>  Specify a custom todo directory (default is ~/.todo)\n"
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
 const RELATIVE_TIME_FORMAT = "Monday MST"
@@ -35,10 +37,11 @@ const (
 )
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args[1:], "halt:d:x:")
+	opts, others, err := getopt.Getopts(os.Args[1:], "halt:d:x:D:")
 	if err != nil {
 		panic(err)
 	}
+	directory_path = path.Join(os.Getenv("HOME"), ".todo/")
 	due_date := time.Now()
 	read_operation := false
 	listing := LISTING_TODAY
@@ -149,7 +152,10 @@ func main() {
 			task_removed := DeleteTask(tasks, index)
 			new_date := task_removed.due_date.AddDate(0, 0, 1)
 			AddTask(task_removed.body_content, new_date)
-			fmt.Printf(RED+"Task \"%s\" delayed until %s"+RESET+"\n", task_removed.FormatTask(), new_date.Weekday())
+			fmt.Printf(RED+"Task \"%s\" delayed until %s"+RESET+"\n",
+				task_removed.FormatTask(), new_date.Weekday())
+		case 'D':
+			directory_path = opt.Value
 		}
 	}
 	if len(opts) > 0 && read_operation {
