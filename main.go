@@ -22,6 +22,7 @@ const help_message = "Usage of todo:\n" +
 	"                  Date uses YYYY/MM/DD. Relative days such as \"Monday\" or \"Tomorrow\" are also supported\n" +
 	"  -c <category>   Specify a category\n" +
 	"  -C <category>   Create a new category\n" +
+	"  -L              List all the categories\n" +
 	"  -D <directory>  Specify a custom todo directory (default is ~/.todo)\n"
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
@@ -39,7 +40,7 @@ const (
 )
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args[1:], "halt:d:x:D:C:c:")
+	opts, others, err := getopt.Getopts(os.Args[1:], "Lhalt:d:x:D:C:c:")
 	if err != nil {
 		panic(err)
 	}
@@ -172,6 +173,12 @@ func main() {
 			fallthrough
 		case 'C':
 			manager.storage_directory = path.Join(manager.storage_directory, opt.Value)
+		case 'L':
+			skip_task_read = true
+			categories := manager.GetCategories()
+			for _, category := range categories {
+				fmt.Printf("%s\n", category)
+			}
 		}
 
 	}

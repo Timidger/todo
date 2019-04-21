@@ -86,6 +86,35 @@ func (manager *TaskManager) DeleteTask(tasks Tasks, task_index int) *Task {
 	return &task
 }
 
+func (manager *TaskManager) GetCategories() Categories {
+	create_dir(manager.storage_directory)
+	root := manager.storage_directory
+	var categories Categories
+	max_depth := strings.Count(root, "/") + 1
+	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
+		depth := strings.Count(path, "/")
+		if path == root || depth > max_depth {
+			return nil
+		}
+		if info.IsDir() {
+			sub_dir_files, err := ioutil.ReadDir(path)
+			if err != nil {
+				return err
+			}
+			var category Category
+			category.Name = info.Name()
+			category.Tasks = len(sub_dir_files)
+			categories = append(categories, category)
+		}
+		return nil
+	})
+	if err != nil {
+		panic(err)
+	}
+	sort.Sort(categories)
+	return categories
+}
+
 func (manager *TaskManager) GetTasks() Tasks {
 	create_dir(manager.storage_directory)
 	root := manager.storage_directory
