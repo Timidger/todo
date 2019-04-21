@@ -40,7 +40,7 @@ func main() {
 		panic(err)
 	}
 	due_date := time.Now()
-	date_set := false
+	read_operation := false
 	listing := LISTING_TODAY
 	for _, opt := range opts {
 		switch opt.Option {
@@ -76,12 +76,12 @@ func main() {
 					due_date = due_date.AddDate(0, 0, 7-(cur_weekday-relative_day))
 				}
 			}
-			date_set = true
 		case 'h':
 			fmt.Printf(help_message)
 			return
 		case 'l':
 			listing = LISTING_TODAY
+			read_operation = true
 			tasks := GetTasks()
 			i := 0
 			for _, task := range tasks {
@@ -92,6 +92,7 @@ func main() {
 			}
 		case 'a':
 			listing = LISTING_ALL
+			read_operation = true
 			tasks := GetTasks()
 			if len(tasks) < 0 {
 				break
@@ -151,7 +152,7 @@ func main() {
 			fmt.Printf(RED+"Task \"%s\" delayed until %s"+RESET+"\n", task_removed.FormatTask(), new_date.Weekday())
 		}
 	}
-	if len(opts) > 0 && !date_set {
+	if len(opts) > 0 && read_operation {
 		return
 	}
 	if input := strings.Join(os.Args[others+1:], " "); len(os.Args) > 1 && input != "" {
