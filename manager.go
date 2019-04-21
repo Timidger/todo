@@ -90,8 +90,12 @@ func (manager *TaskManager) GetTasks() Tasks {
 	create_dir(manager.storage_directory)
 	root := manager.storage_directory
 	var tasks Tasks
+	max_depth := strings.Count(root, "/") + 1
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		if path == root {
+		// Nested directories are ignored -- this is to support categories
+		// as simply "other" todo storages.
+		depth := strings.Count(path, "/")
+		if path == root || info.IsDir() || depth > max_depth {
 			return nil
 		}
 		var task Task
