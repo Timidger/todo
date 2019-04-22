@@ -30,6 +30,31 @@ func (tasks Tasks) Swap(i, j int) {
 	tasks[i], tasks[j] = tasks[j], tasks[i]
 }
 
+/// Condenses tasks to be the smallest possible hash value possible
+func (tasks Tasks) Condense() Tasks {
+	hashes := make(map[string]*Task)
+	length := 1
+condense_tasks:
+	for {
+		for i, _ := range tasks {
+			task := &tasks[i]
+			truncated_name := string(task.index[0:length])
+			if _, exists := hashes[truncated_name]; exists {
+				length++
+				hashes = make(map[string]*Task)
+				continue condense_tasks
+			}
+			hashes[truncated_name] = task
+		}
+		break
+	}
+	// Go (heh) through and clean up the indices to be as minimal as possible
+	for hash, task := range hashes {
+		task.index = hash
+	}
+	return tasks
+}
+
 type TaskManager struct {
 	storage_directory string
 }
@@ -73,23 +98,17 @@ func (manager *TaskManager) AddTask(text string, due_date *time.Time) *Task {
 }
 
 /// Deletes a task by index
-func (manager *TaskManager) DeleteTask(tasks Tasks, task_index int) *Task {
-	if task_index < 0 {
-		fmt.Println("Index must be non-negative")
-		// TODO Do proper error handling
-		os.Exit(1)
+func (manager *TaskManager) DeleteTask(tasks Tasks, task_index string) *Task {
+	for i, task := range tasks {
+		if task.index == task_index {
+			if err := os.Remove(tasks[i].file_name); err != nil {
+				panic(err)
+			}
+			tasks = append(tasks[:i], tasks[i+1:]...)
+			return &task
+		}
 	}
-	if task_index >= len(tasks) {
-		fmt.Println("Index too large")
-		// TODO Do proper error handling
-		os.Exit(1)
-	}
-	if err := os.Remove(tasks[task_index].file_name); err != nil {
-		panic(err)
-	}
-	task := tasks[task_index]
-	tasks = append(tasks[:task_index], tasks[task_index+1:]...)
-	return &task
+	return nil
 }
 
 func (manager *TaskManager) GetCategories() Categories {
@@ -121,7 +140,7 @@ func (manager *TaskManager) GetCategories() Categories {
 	return categories
 }
 
-func (manager *TaskManager) GetTasks() Tasks {
+func (manager *TaskManager) get_tasks_helper() Tasks {
 	create_dir(manager.storage_directory)
 	root := manager.storage_directory
 	var tasks Tasks
@@ -135,6 +154,10 @@ func (manager *TaskManager) GetTasks() Tasks {
 		}
 		var task Task
 		task.file_name = path
+
+		_, file_name := filepath.Split(path)
+		file_name = strings.Split(file_name, ".")[0]
+		task.index = file_name
 		bytes, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
@@ -160,14 +183,21 @@ func (manager *TaskManager) GetTasks() Tasks {
 	return tasks
 }
 
+func (manager *TaskManager) GetTasks() Tasks {
+	tasks := manager.get_tasks_helper()
+	tasks = tasks.Condense()
+	return tasks
+}
+
 func (manager *TaskManager) GetTasksToday() []Task {
-	tasks_ := manager.GetTasks()
-	tasks := make([]Task, 0)
+	tasks_ := manager.get_tasks_helper()
+	tasks := make(Tasks, 0)
 	for _, task := range tasks_ {
 		if task.DueToday() {
 			tasks = append(tasks, task)
 		}
 	}
+	tasks = tasks.Condense()
 	return tasks
 }
 

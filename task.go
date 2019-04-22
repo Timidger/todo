@@ -13,6 +13,8 @@ type Task struct {
 	// If nil then there is no deadline
 	due_date  *time.Time
 	file_name string
+	// The minimal index needed to specify this task
+	index string
 }
 
 func (task Task) String() string {

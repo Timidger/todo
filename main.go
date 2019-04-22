@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -95,11 +94,9 @@ func main() {
 		case 'l':
 			listing = LISTING_TODAY
 			skip_task_read = true
-			tasks := manager.GetTasks()
-			for i, task := range tasks {
-				if task.DueToday() {
-					fmt.Printf("%d: %s\n", i, task.FormatTask())
-				}
+			tasks := manager.GetTasksToday()
+			for _, task := range tasks {
+				fmt.Printf("%s: %s\n", task.index, task.FormatTask())
 			}
 		case 'a':
 			listing = LISTING_ALL
@@ -127,7 +124,7 @@ func main() {
 					}
 					fmt.Printf(day_header)
 				}
-				fmt.Printf("%d:\t%s\n", i, task.FormatTask())
+				fmt.Printf("%s:\t%s\n", task.index, task.FormatTask())
 			}
 			if no_deadlines {
 				fmt.Printf(GREY + "No Deadline:" + RESET + "\n")
@@ -139,32 +136,28 @@ func main() {
 			}
 		case 'd':
 			skip_task_read = true
-			to_delete, err := strconv.ParseInt(opt.Value, 10, 64)
-			if err != nil {
-				panic(err)
-			}
-			index := int(to_delete)
+			index := opt.Value
+			var task_deleted *Task
 			switch listing {
 			case LISTING_ALL:
 				tasks := manager.GetTasks()
-				task_deleted := manager.DeleteTask(tasks, index)
-				fmt.Printf(GREEN+"%d: %s"+RESET+"\n", index, task_deleted.FormatTask())
+				task_deleted = manager.DeleteTask(tasks, index)
 			case LISTING_TODAY:
 				tasks := manager.GetTasksToday()
-				task_deleted := manager.DeleteTask(tasks, index)
+				task_deleted = manager.DeleteTask(tasks, index)
 				// Hack to get around the coloration display
 				task_deleted.due_date = &now
-				fmt.Printf(GREEN+"%d: %s"+RESET+"\n", index, task_deleted.FormatTask())
 			default:
 				panic(fmt.Sprintf("Unknown flag %v", listing))
 			}
+			if task_deleted == nil {
+				fmt.Printf(RED+"Bad index \"%s\"", index)
+				os.Exit(1)
+			}
+			fmt.Printf(GREEN+"%v: %s"+RESET+"\n", index, task_deleted.FormatTask())
 		case 'x':
 			skip_task_read = true
-			to_delay, err := strconv.ParseInt(opt.Value, 10, 64)
-			if err != nil {
-				panic(err)
-			}
-			index := int(to_delay)
+			index := opt.Value
 			var tasks []Task
 			switch listing {
 			case LISTING_ALL:
@@ -172,11 +165,16 @@ func main() {
 			case LISTING_TODAY:
 				tasks = manager.GetTasksToday()
 			}
-			if tasks[index].due_date == nil {
+			task_removed := manager.DeleteTask(tasks, index)
+			if task_removed == nil {
+				fmt.Printf(RED+"Bad index\"%s\"", index)
+				os.Exit(1)
+			}
+			if task_removed.due_date == nil {
+				manager.AddTask(task_removed.body_content, nil)
 				fmt.Printf(RED + "Cannot delay a todo with no deadline!" + RESET + "\n")
 				os.Exit(1)
 			}
-			task_removed := manager.DeleteTask(tasks, index)
 			new_date := task_removed.due_date.AddDate(0, 0, 1)
 			manager.AddTask(task_removed.body_content, &new_date)
 			fmt.Printf(RED+"Task \"%s\" delayed until %s"+RESET+"\n",
