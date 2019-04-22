@@ -28,12 +28,6 @@ const help_message = "Usage of todo:\n" +
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
 const RELATIVE_TIME_FORMAT = "Monday MST"
-const (
-	GREY  = "\x1b[90m"
-	RED   = "\x1b[31m"
-	GREEN = "\x1b[32m"
-	RESET = "\x1b[39m"
-)
 
 const (
 	LISTING_ALL = iota
@@ -80,7 +74,8 @@ func main() {
 				case "Tomorrow":
 					relative_day = (cur_weekday + 1) % 7
 				default:
-					panic(err)
+					LogError(fmt.Sprintf("Bad date: %s", opt.Value))
+					os.Exit(1)
 				}
 				if cur_weekday < relative_day {
 					*due_date = due_date.AddDate(0, 0, int(relative_day-cur_weekday))
@@ -100,9 +95,7 @@ func main() {
 				DisplayTasksLong(tasks)
 				break
 			}
-			for _, task := range tasks {
-				fmt.Printf("%-10s%s\n", task.index+":", task.FormatTask())
-			}
+			DisplayTasks(tasks)
 		case 'a':
 			listing = LISTING_ALL
 			skip_task_read = true
@@ -128,10 +121,10 @@ func main() {
 				panic(fmt.Sprintf("Unknown flag %v", listing))
 			}
 			if task_deleted == nil {
-				fmt.Printf(RED+"Bad index \"%s\"", index)
+				LogError(fmt.Sprintf("Bad index \"%s\"", index))
 				os.Exit(1)
 			}
-			fmt.Printf(GREEN+"%v: %s"+RESET+"\n", index, task_deleted.FormatTask())
+			LogSuccess(task_deleted.String())
 		case 'x':
 			skip_task_read = true
 			index := opt.Value
@@ -144,26 +137,25 @@ func main() {
 			}
 			task_removed := manager.DeleteTask(tasks, index)
 			if task_removed == nil {
-				fmt.Printf(RED+"Bad index\"%s\"", index)
+				LogError(fmt.Sprintf("Bad index\"%s\"", index))
 				os.Exit(1)
 			}
 			if task_removed.due_date == nil {
 				manager.AddTask(task_removed.body_content, nil)
-				fmt.Printf(RED + "Cannot delay a todo with no deadline!" + RESET + "\n")
+				LogError("Cannot delay a todo with no deadline!")
 				os.Exit(1)
 			}
 			new_date := task_removed.due_date.AddDate(0, 0, 1)
 			manager.AddTask(task_removed.body_content, &new_date)
-			fmt.Printf(RED+"Task \"%s\" delayed until %s"+RESET+"\n",
-				task_removed.FormatTask(), new_date.Weekday())
+			LogError(fmt.Sprintf("Task \"%s\" delayed until %s",
+				task_removed.body_content, new_date.Weekday()))
 		case 'D':
 			manager.storage_directory = opt.Value
 		case 'c':
 			category := opt.Value
 			category_path := path.Join(manager.storage_directory, category)
 			if _, err := os.Stat(category_path); os.IsNotExist(err) {
-				fmt.Printf(RED+"Category \"%s\" does not exist"+RESET+"\n",
-					category)
+				LogError(fmt.Sprintf("Category \"%s\" does not exist", category))
 				os.Exit(1)
 			}
 			fallthrough
@@ -173,7 +165,7 @@ func main() {
 			skip_task_read = true
 			categories := manager.GetCategories()
 			for _, category := range categories {
-				fmt.Printf("%s\n", category)
+				fmt.Println(category)
 			}
 		case 'n':
 			due_date = nil

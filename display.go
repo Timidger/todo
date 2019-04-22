@@ -5,6 +5,29 @@ import (
 	"time"
 )
 
+const (
+	GREY  = "\x1b[90m"
+	RED   = "\x1b[31m"
+	GREEN = "\x1b[32m"
+	RESET = "\x1b[39m"
+)
+
+func LogSuccess(s string) {
+	fmt.Printf(GREEN + s + RESET + "\n")
+}
+
+func LogError(s string) {
+	fmt.Printf(RED + s + RESET + "\n")
+}
+
+/// Displays tasks in the "Short" form. Just a list of unique hashes and
+/// the body contents. Really only useful for showing "today's" tasks.
+func DisplayTasks(tasks Tasks) {
+	for _, task := range tasks {
+		fmt.Println(task.FormatTask())
+	}
+}
+
 /// Displays tasks in the "Long" form, grouping tasks in distinct days and
 /// greying out tasks beyond a week.
 ///
@@ -29,7 +52,7 @@ func DisplayTasksLong(tasks Tasks) {
 			}
 			fmt.Printf(day_header)
 		}
-		fmt.Printf("%-10s%s\n", task.index+":", task.FormatTask())
+		fmt.Println(task.FormatTask())
 	}
 	if no_deadlines {
 		fmt.Printf(GREY + "No Deadline:" + RESET + "\n")

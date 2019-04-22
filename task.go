@@ -18,18 +18,17 @@ type Task struct {
 }
 
 func (task Task) String() string {
-	return task.body_content
+	return fmt.Sprintf("%-10s%v", task.index+":", task.body_content)
 }
 
 // Format just the task body
 func (task *Task) FormatTask() string {
-	format_string := "%v"
 	if task.DueBeforeToday() {
-		format_string = RED + format_string + RESET
+		return RED + task.String() + RESET
 	} else if task.DueAfter(time.Now().AddDate(0, 0, 6)) {
-		format_string = GREY + format_string + RESET
+		return GREY + task.String() + RESET
 	}
-	return fmt.Sprintf(format_string, task.body_content)
+	return task.String()
 }
 
 // Determines if a task is due today (or any days before today)
