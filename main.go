@@ -113,7 +113,7 @@ func main() {
 			cur_day := tasks[0].due_date
 			no_deadlines := false
 			for i, task := range tasks {
-				if task.due_date == nil {
+				if cur_day == nil || task.due_date == nil {
 					no_deadlines = true
 					continue
 				}
@@ -173,6 +173,10 @@ func main() {
 				tasks = manager.GetTasks()
 			case LISTING_TODAY:
 				tasks = manager.GetTasksToday()
+			}
+			if tasks[index].due_date == nil {
+				fmt.Printf(RED + "Cannot delay a todo with no deadline!" + RESET + "\n")
+				os.Exit(1)
 			}
 			task_removed := manager.DeleteTask(tasks, index)
 			new_date := task_removed.due_date.AddDate(0, 0, 1)
