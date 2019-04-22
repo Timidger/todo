@@ -96,11 +96,9 @@ func main() {
 			listing = LISTING_TODAY
 			skip_task_read = true
 			tasks := manager.GetTasks()
-			i := 0
-			for _, task := range tasks {
+			for i, task := range tasks {
 				if task.DueToday() {
 					fmt.Printf("%d: %s\n", i, task.FormatTask())
-					i++
 				}
 			}
 		case 'a':
