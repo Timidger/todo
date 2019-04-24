@@ -92,7 +92,9 @@ func main() {
 			tasks := manager.GetTasksToday()
 			if len(tasks) == 0 {
 				tasks = manager.GetTasks()
-				DisplayTasksLong(tasks)
+				if len(tasks) != 0 {
+					DisplayTasksLong(tasks)
+				}
 				break
 			}
 			DisplayTasks(tasks)
