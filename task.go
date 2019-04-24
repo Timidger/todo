@@ -15,10 +15,16 @@ type Task struct {
 	file_name string
 	// The minimal index needed to specify this task
 	index string
+	// optional category
+	category *string
 }
 
 func (task Task) String() string {
-	return fmt.Sprintf("%-10s%v", task.index+":", task.body_content)
+	category_name := ""
+	if task.category != nil {
+		category_name = "(" + *task.category + ")"
+	}
+	return fmt.Sprintf("%-10s%-80v%s", task.index+":", task.body_content, category_name)
 }
 
 // Format just the task body

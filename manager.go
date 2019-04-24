@@ -185,19 +185,30 @@ func (manager *TaskManager) get_tasks_helper() Tasks {
 
 func (manager *TaskManager) GetTasks() Tasks {
 	tasks := manager.get_tasks_helper()
+	categories := manager.GetCategories()
+	original_directory := manager.storage_directory
+	for _, category := range categories {
+		manager.storage_directory = path.Join(original_directory, category.Name)
+		category_name := category.Name
+		new_tasks := manager.get_tasks_helper()
+		for i, _ := range new_tasks {
+			new_tasks[i].category = &category_name
+		}
+		tasks = append(tasks, new_tasks...)
+	}
+	manager.storage_directory = original_directory
 	tasks = tasks.Condense()
 	return tasks
 }
 
 func (manager *TaskManager) GetTasksToday() []Task {
-	tasks_ := manager.get_tasks_helper()
+	tasks_ := manager.GetTasks()
 	tasks := make(Tasks, 0)
 	for _, task := range tasks_ {
 		if task.DueToday() {
 			tasks = append(tasks, task)
 		}
 	}
-	tasks = tasks.Condense()
 	return tasks
 }
 

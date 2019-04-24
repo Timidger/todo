@@ -56,9 +56,9 @@ func DisplayTasksLong(tasks Tasks) {
 	}
 	if no_deadlines {
 		fmt.Printf(GREY + "No Deadline:" + RESET + "\n")
-		for i, task := range tasks {
+		for _, task := range tasks {
 			if task.due_date == nil {
-				fmt.Printf(GREY+"%d:\t%s"+RESET+"\n", i, task.FormatTask())
+				fmt.Printf(GREY+"%s"+RESET+"\n", task.FormatTask())
 			}
 		}
 	}
