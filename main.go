@@ -116,7 +116,9 @@ func main() {
 				tasks := manager.GetTasksToday()
 				task_deleted = manager.DeleteTask(tasks, index)
 				// Hack to get around the coloration display
-				task_deleted.due_date = &now
+				if task_deleted != nil {
+					task_deleted.due_date = &now
+				}
 			default:
 				panic(fmt.Sprintf("Unknown flag %v", listing))
 			}
