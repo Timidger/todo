@@ -72,6 +72,9 @@ func (manager *TaskManager) AddTask(text string, due_date *time.Time) *Task {
 	// TODO Get a better name scheme
 	sha := sha1.New()
 	sha.Write([]byte(text))
+	// Also use the storage directory name as part of the hash,
+	// this is to avoid collisions across categories.
+	sha.Write([]byte(path.Base(manager.storage_directory)))
 	save_path := path.Join(root, fmt.Sprintf("%x", sha.Sum(nil))+".todo")
 	if _, err := os.Stat(save_path); !os.IsNotExist(err) {
 		fmt.Println("You have already made that a task")
