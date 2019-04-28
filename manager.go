@@ -182,7 +182,6 @@ func (manager *TaskManager) get_tasks_helper() Tasks {
 	if err != nil {
 		panic(err)
 	}
-	sort.Sort(tasks)
 	return tasks
 }
 
@@ -201,6 +200,7 @@ func (manager *TaskManager) GetTasks() Tasks {
 	}
 	manager.storage_directory = original_directory
 	tasks = tasks.Condense()
+	sort.Sort(tasks)
 	return tasks
 }
 
