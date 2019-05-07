@@ -33,7 +33,13 @@ func DisplayTasks(tasks Tasks) {
 ///
 /// Non-deadline tasks are also displayed.
 func DisplayTasksLong(tasks Tasks) {
-	cur_day := tasks[0].due_date
+	var cur_day *time.Time = nil
+	for _, task := range tasks {
+		if task.due_date != nil {
+			cur_day = task.due_date
+			break
+		}
+	}
 	no_deadlines := false
 	for i, task := range tasks {
 		if cur_day == nil || task.due_date == nil {
