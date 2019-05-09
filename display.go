@@ -41,12 +41,14 @@ func DisplayTasksLong(tasks Tasks) {
 		}
 	}
 	no_deadlines := false
-	for i, task := range tasks {
+	printed := false
+	for _, task := range tasks {
 		if cur_day == nil || task.due_date == nil {
 			no_deadlines = true
 			continue
 		}
-		if i == 0 || !cur_day.Equal(*task.due_date) {
+		if !printed || !cur_day.Equal(*task.due_date) {
+			printed = true
 			cur_day = task.due_date
 			day_header := fmt.Sprintf("%-40v\t%v\n",
 				cur_day.Format("Monday")+":",
