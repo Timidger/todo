@@ -21,7 +21,7 @@ func (tasks Tasks) Len() int {
 
 func (tasks Tasks) Less(i, j int) bool {
 	if tasks[i].due_date == nil || tasks[j].due_date == nil {
-		return false
+		return true
 	}
 	return tasks[i].due_date.Before(*tasks[j].due_date)
 }
