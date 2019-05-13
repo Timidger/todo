@@ -15,6 +15,8 @@ type Task struct {
 	file_name string
 	// The minimal index needed to specify this task
 	index string
+	// The full index
+	full_index string
 	// optional category
 	category *string
 }

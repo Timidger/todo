@@ -103,7 +103,7 @@ func (manager *TaskManager) AddTask(text string, due_date *time.Time) *Task {
 /// Deletes a task by index
 func (manager *TaskManager) DeleteTask(tasks Tasks, task_index string) *Task {
 	for i, task := range tasks {
-		if task.index == task_index {
+		if task_index == task.index {
 			if err := os.Remove(tasks[i].file_name); err != nil {
 				panic(err)
 			}
@@ -111,7 +111,26 @@ func (manager *TaskManager) DeleteTask(tasks Tasks, task_index string) *Task {
 			return &task
 		}
 	}
-	return nil
+	// If exact match couldn't be found see if there's a unique match using
+	// the full length.
+	to_delete_index := -1
+	for i, task := range tasks {
+		if task_index == task.full_index[0:len(task_index)] {
+			if to_delete_index != -1 {
+				return nil
+			}
+			to_delete_index = i
+		}
+	}
+	if to_delete_index == -1 {
+		return nil
+	}
+	if err := os.Remove(tasks[to_delete_index].file_name); err != nil {
+		panic(err)
+	}
+	task := tasks[to_delete_index]
+	tasks = append(tasks[:to_delete_index], tasks[to_delete_index+1:]...)
+	return &task
 }
 
 func (manager *TaskManager) GetCategories() Categories {
@@ -161,6 +180,7 @@ func (manager *TaskManager) get_tasks_helper() Tasks {
 		_, file_name := filepath.Split(path)
 		file_name = strings.Split(file_name, ".")[0]
 		task.index = file_name
+		task.full_index = file_name
 		bytes, err := ioutil.ReadFile(path)
 		if err != nil {
 			return err
