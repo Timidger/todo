@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"time"
 )
 
@@ -13,11 +14,11 @@ const (
 )
 
 func LogSuccess(s string) {
-	fmt.Printf(GREEN + s + RESET + "\n")
+	fmt.Fprintf(os.Stderr, GREEN+s+RESET+"\n")
 }
 
 func LogError(s string) {
-	fmt.Printf(RED + s + RESET + "\n")
+	fmt.Fprintf(os.Stderr, RED+s+RESET+"\n")
 }
 
 /// Displays tasks in the "Short" form. Just a list of unique hashes and
