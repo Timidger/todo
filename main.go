@@ -100,13 +100,11 @@ func main() {
 			}
 			DisplayTasks(tasks)
 		case 'a':
+			// We do the listing down below, this is so if this is
+			// paired with actions like delete we don't print everything to
+			// stdout for sure. This is to allow piping with that to work with
+			// e.g. todo -ac new_category $(todo -d 1234)
 			listing = LISTING_ALL
-			skip_task_read = true
-			tasks := manager.GetTasks()
-			if len(tasks) == 0 {
-				break
-			}
-			DisplayTasksLong(tasks)
 		case 'd':
 			skip_task_read = true
 			index := opt.Value
@@ -180,6 +178,15 @@ func main() {
 			due_date = nil
 		}
 
+	}
+	// if skip_task_read is set then we have done an action that means we should
+	// not print this to stdout due to the chaining rule described above.
+	if listing == LISTING_ALL && !skip_task_read {
+		tasks := manager.GetTasks()
+		if len(tasks) != 0 {
+			DisplayTasksLong(tasks)
+		}
+		skip_task_read = true
 	}
 	if len(opts) > 0 && skip_task_read {
 		return
