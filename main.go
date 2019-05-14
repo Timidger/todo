@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"git.sr.ht/~sircmpwn/getopt"
+	"github.com/mattn/go-isatty"
 	"io/ioutil"
 	"os"
 	"path"
@@ -128,7 +129,11 @@ func main() {
 				LogError(fmt.Sprintf("Bad index \"%s\"", index))
 				os.Exit(1)
 			}
-			LogSuccess(task_deleted.String())
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				fmt.Printf(task_deleted.body_content)
+			} else {
+				LogSuccess(task_deleted.String())
+			}
 		case 'x':
 			skip_task_read = true
 			index := opt.Value
