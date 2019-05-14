@@ -110,16 +110,23 @@ func main() {
 			index := opt.Value
 			var task_deleted *Task
 			switch listing {
+			case LISTING_TODAY:
+				tasks := manager.GetTasksToday()
+				if len(tasks) != 0 {
+					task_deleted = manager.DeleteTask(tasks, index)
+					// Hack to get around the coloration display
+					if task_deleted != nil {
+						task_deleted.due_date = &now
+					}
+					break
+				}
+				// If there are no tasks today then we must try to delete based
+				// on all tasks. This lets you use it like -l when there are no
+				// tasks today.
+				fallthrough
 			case LISTING_ALL:
 				tasks := manager.GetTasks()
 				task_deleted = manager.DeleteTask(tasks, index)
-			case LISTING_TODAY:
-				tasks := manager.GetTasksToday()
-				task_deleted = manager.DeleteTask(tasks, index)
-				// Hack to get around the coloration display
-				if task_deleted != nil {
-					task_deleted.due_date = &now
-				}
 			default:
 				panic(fmt.Sprintf("Unknown flag %v", listing))
 			}
