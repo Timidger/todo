@@ -3,8 +3,11 @@ package main
 import (
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 )
+
+const CONTENT_LENGTH int = 75
 
 type Task struct {
 	// The "body" content of the task.
@@ -21,12 +24,43 @@ type Task struct {
 	category *string
 }
 
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func (task Task) String() string {
 	category_name := ""
 	if task.category != nil {
 		category_name = "(" + *task.category + ")"
 	}
-	return fmt.Sprintf("%-10s%-80v%s", task.index+":", task.body_content, category_name)
+	if len(task.body_content) < CONTENT_LENGTH {
+		return fmt.Sprintf("%-10s%-80v%s", task.index+":", task.body_content, category_name)
+	} else {
+		words := strings.Split(task.body_content, " ")
+		first := true
+		result := ""
+		buffer := ""
+		for _, word := range words {
+			// TODO Deal with empty buffer (e.g. words > CONTENT_LENGTH)
+			if len(buffer)+len(word)+1 > CONTENT_LENGTH {
+				if first {
+					result = fmt.Sprintf("%-10s%-80v%s", task.index+":", buffer, category_name)
+					first = false
+				} else {
+					result += fmt.Sprintf("\n          %v", buffer)
+				}
+				buffer = ""
+			}
+			buffer += word + " "
+		}
+		if len(buffer) != 0 {
+			result += fmt.Sprintf("\n          %v", buffer)
+		}
+		return result
+	}
 }
 
 // Format just the task body
