@@ -26,6 +26,15 @@ func (tasks Tasks) Less(i, j int) bool {
 	if tasks[j].due_date == nil {
 		return true
 	}
+	if tasks[i].due_date.Equal(*tasks[j].due_date) {
+		if tasks[i].category == nil {
+			return false
+		}
+		if tasks[j].category == nil {
+			return true
+		}
+		return strings.Compare(*tasks[i].category, *tasks[j].category) < 0
+	}
 	return tasks[i].due_date.Before(*tasks[j].due_date)
 }
 
@@ -235,6 +244,7 @@ func (manager *TaskManager) GetTasksToday() []Task {
 			tasks = append(tasks, task)
 		}
 	}
+	sort.Sort(tasks)
 	return tasks
 }
 
