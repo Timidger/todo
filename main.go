@@ -150,6 +150,11 @@ func main() {
 				tasks = manager.GetTasksToday()
 			}
 			task_removed := manager.DeleteTask(tasks, index)
+			old_storage := manager.storage_directory
+			if task_removed.category != nil {
+				manager.storage_directory =
+					path.Join(manager.storage_directory, *task_removed.category)
+			}
 			if task_removed == nil {
 				LogError(fmt.Sprintf("Bad index\"%s\"", index))
 				os.Exit(1)
@@ -163,6 +168,7 @@ func main() {
 			manager.AddTask(task_removed.body_content, &new_date)
 			LogError(fmt.Sprintf("Task \"%s\" delayed until %s",
 				task_removed.body_content, new_date.Weekday()))
+			manager.storage_directory = old_storage
 		case 'D':
 			manager.storage_directory = opt.Value
 		case 'c':
