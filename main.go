@@ -22,8 +22,8 @@ const help_message = "Usage of todo:\n" +
 	"  -x <index>      Delay a task by one day. It is suggested you don't do this too often\n" +
 	"  -t <date>       Delay the task until the date\n" +
 	"                  Date uses YYYY/MM/DD. Relative days such as \"Monday\" or \"Tomorrow\" are also supported\n" +
-	"  -r <number>     Repeat this task after a number of days. Must be positive." +
-	"                  Repeat delta is based on the due date, not the day it was deleted" +
+	"  -r <number>     Repeat this task after a number of days. Must be positive.\n" +
+	"                  Repeat delta is based on the due date, not the day it was deleted\n" +
 	"  -c <category>   Specify a category\n" +
 	"  -C <category>   Create a new category\n" +
 	"  -L              List all the categories\n" +
