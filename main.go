@@ -25,7 +25,7 @@ const help_message = "Usage of todo:\n" +
 	"  -L              List all the categories\n" +
 	"  -n              Don't have a deadline for this task\n" +
 	"                  Note that todos with no deadline only appear with -a\n" +
-	"  -D <directory>  Specify a custom todo directory (default is ~/.todo)\n"
+	"  -S <directory>  Specify a custom todo directory (default is ~/.todo)\n"
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
 const RELATIVE_TIME_FORMAT = "Monday MST"
@@ -36,7 +36,7 @@ const (
 )
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args[1:], "nLhalt:d:x:D:C:c:")
+	opts, others, err := getopt.Getopts(os.Args[1:], "nLhalt:d:x:S:C:c:")
 	if err != nil {
 		panic(err)
 	}
@@ -169,7 +169,7 @@ func main() {
 			LogError(fmt.Sprintf("Task \"%s\" delayed until %s",
 				task_removed.body_content, new_date.Weekday()))
 			manager.storage_directory = old_storage
-		case 'D':
+		case 'S':
 			manager.storage_directory = opt.Value
 		case 'c':
 			category := opt.Value
