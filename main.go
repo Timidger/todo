@@ -160,12 +160,12 @@ func main() {
 				os.Exit(1)
 			}
 			if task_removed.due_date == nil {
-				manager.AddTask(task_removed.body_content, nil)
+				manager.SaveTask(NewTask(task_removed.body_content, nil))
 				LogError("Cannot delay a todo with no deadline!")
 				os.Exit(1)
 			}
 			new_date := task_removed.due_date.AddDate(0, 0, 1)
-			manager.AddTask(task_removed.body_content, &new_date)
+			manager.SaveTask(NewTask(task_removed.body_content, &new_date))
 			LogError(fmt.Sprintf("Task \"%s\" delayed until %s",
 				task_removed.body_content, new_date.Weekday()))
 			manager.storage_directory = old_storage
@@ -205,10 +205,10 @@ func main() {
 		return
 	}
 	if input := strings.Join(os.Args[others+1:], " "); len(os.Args) > 1 && input != "" {
-		manager.AddTask(input, due_date)
+		manager.SaveTask(NewTask(input, due_date))
 	} else {
 		reader := bufio.NewReader(os.Stdin)
-		manager.AddTask(readInTask(reader), due_date)
+		manager.SaveTask(NewTask(readInTask(reader), due_date))
 	}
 }
 

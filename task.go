@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 const CONTENT_LENGTH int = 75
@@ -61,6 +63,22 @@ func (task Task) String() string {
 		}
 		return result
 	}
+}
+
+/// Creates a new task, without saving it.
+func NewTask(text string, due_date *time.Time) Task {
+	if !utf8.ValidString(text) {
+		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
+	}
+	text = strings.TrimSuffix(text, "\n")
+	if text == "" {
+		LogError("Cannot make a task with an empty string")
+		os.Exit(1)
+	}
+	var task Task
+	task.body_content = text
+	task.due_date = due_date
+	return task
 }
 
 // Format just the task body

@@ -71,45 +71,33 @@ type TaskManager struct {
 	storage_directory string
 }
 
-func (manager *TaskManager) AddTask(text string, due_date *time.Time) *Task {
+// Saves a new task to disk
+func (manager *TaskManager) SaveTask(task Task) {
 	create_dir(manager.storage_directory)
-	root := manager.storage_directory
-	if !utf8.ValidString(text) {
-		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
-	}
-	text = strings.TrimSuffix(text, "\n")
-	if text == "" {
-		return nil
-	}
-	// TODO Get a better name scheme
 	sha := sha1.New()
-	sha.Write([]byte(text))
+	sha.Write([]byte(task.body_content))
 	// Also use the storage directory name as part of the hash,
 	// this is to avoid collisions across categories.
 	sha.Write([]byte(path.Base(manager.storage_directory)))
-	save_path := path.Join(root, fmt.Sprintf("%x", sha.Sum(nil))+".todo")
+	save_path := path.Join(manager.storage_directory,
+		fmt.Sprintf("%x", sha.Sum(nil))+".todo")
 	if _, err := os.Stat(save_path); !os.IsNotExist(err) {
 		fmt.Println("You have already made that a task")
-		// TODO proper error messages
 		os.Exit(1)
 	}
-	var task Task
-	task.body_content = text
-	task.due_date = due_date
 	new, err := os.Create(save_path)
 	if err != nil {
 		panic(err)
 	}
 	defer new.Close()
-	if due_date != nil {
-		if _, err := new.WriteString(fmt.Sprintf("%v\n", due_date.Format(EXPLICIT_TIME_FORMAT))); err != nil {
+	if task.due_date != nil {
+		if _, err := new.WriteString(fmt.Sprintf("%v\n", task.due_date.Format(EXPLICIT_TIME_FORMAT))); err != nil {
 			panic(err)
 		}
 	}
 	if _, err := new.WriteString(task.body_content); err != nil {
 		panic(err)
 	}
-	return &task
 }
 
 /// Deletes a task by index
