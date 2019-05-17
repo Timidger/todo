@@ -91,9 +91,17 @@ func (manager *TaskManager) SaveTask(task Task) {
 	}
 	defer new.Close()
 	if task.due_date != nil {
-		if _, err := new.WriteString(fmt.Sprintf("%v\n", task.due_date.Format(EXPLICIT_TIME_FORMAT))); err != nil {
+		if _, err := new.WriteString(fmt.Sprintf("%v\t", task.due_date.Format(EXPLICIT_TIME_FORMAT))); err != nil {
 			panic(err)
 		}
+	}
+	if task.repeat != nil {
+		if _, err := new.WriteString(task.repeat.String()); err != nil {
+			panic(err)
+		}
+	}
+	if _, err := new.WriteString("\n"); err != nil {
+		panic(err)
 	}
 	if _, err := new.WriteString(task.body_content); err != nil {
 		panic(err)
@@ -188,13 +196,25 @@ func (manager *TaskManager) get_tasks_helper() Tasks {
 		if !utf8.ValidString(string(bytes)) {
 			panic(fmt.Sprintf("Invalid UTF-8 string: %v", bytes))
 		}
-		split := strings.SplitN(string(bytes), "\n", 2)
-		due_date, err := time.Parse(EXPLICIT_TIME_FORMAT, split[0])
-		if err != nil {
+		lines := strings.SplitN(string(bytes), "\n", 2)
+		if len(lines) == 1 {
 			task.body_content = string(bytes)
 		} else {
+			time_parts := strings.SplitN(lines[0], "\t", 2)
+			var due_date time.Time
+			due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, time_parts[0])
+			if err != nil {
+				panic(err)
+			}
+			if len(time_parts) == 2 && time_parts[1] != "" {
+				duration, err := time.ParseDuration(time_parts[1])
+				if err != nil {
+					panic(err)
+				}
+				task.repeat = &duration
+			}
 			task.due_date = &due_date
-			task.body_content = split[1]
+			task.body_content = lines[1]
 		}
 		tasks = append(tasks, task)
 		return nil

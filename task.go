@@ -16,7 +16,10 @@ type Task struct {
 	body_content string
 	// When this task is due and must be done.
 	// If nil then there is no deadline
-	due_date  *time.Time
+	due_date *time.Time
+	// When to repeat this task when it is deleted.
+	// If it is null this task does not repeat.
+	repeat    *time.Duration
 	file_name string
 	// The minimal index needed to specify this task
 	index string
@@ -66,7 +69,7 @@ func (task Task) String() string {
 }
 
 /// Creates a new task, without saving it.
-func NewTask(text string, due_date *time.Time) Task {
+func NewTask(text string, due_date *time.Time, repeat *time.Duration) Task {
 	if !utf8.ValidString(text) {
 		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
 	}
@@ -78,6 +81,7 @@ func NewTask(text string, due_date *time.Time) Task {
 	var task Task
 	task.body_content = text
 	task.due_date = due_date
+	task.repeat = repeat
 	return task
 }
 

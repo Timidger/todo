@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -17,9 +18,12 @@ const help_message = "Usage of todo:\n" +
 	"  -l              List the things to do today in no particular order\n" +
 	"  -a              List all the things to do, regardless of due date, from soonest to latest\n" +
 	"  -d <index>      Delete a task by index number. If preceded by -a based on full list, not just today\n" +
+	"  -D <index>      Same as -d but it will not recreate a task that repeats\n" +
 	"  -x <index>      Delay a task by one day. It is suggested you don't do this too often\n" +
 	"  -t <date>       Delay the task until the date\n" +
 	"                  Date uses YYYY/MM/DD. Relative days such as \"Monday\" or \"Tomorrow\" are also supported\n" +
+	"  -r <number>     Repeat this task after a number of days. Must be positive." +
+	"                  Repeat delta is based on the due date, not the day it was deleted" +
 	"  -c <category>   Specify a category\n" +
 	"  -C <category>   Create a new category\n" +
 	"  -L              List all the categories\n" +
@@ -36,7 +40,7 @@ const (
 )
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args[1:], "nLhalt:d:x:S:C:c:")
+	opts, others, err := getopt.Getopts(os.Args[1:], "nLhalt:d:x:D:S:C:c:r:")
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +48,9 @@ func main() {
 	manager.storage_directory = path.Join(os.Getenv("HOME"), ".todo/")
 	now := time.Now()
 	due_date := &now
+	var repeat *time.Duration = nil
 	skip_task_read := false
+	force_delete := false
 	listing := LISTING_TODAY
 	for _, opt := range opts {
 		switch opt.Option {
@@ -105,6 +111,9 @@ func main() {
 			// stdout for sure. This is to allow piping with that to work with
 			// e.g. todo -ac new_category $(todo -d 1234)
 			listing = LISTING_ALL
+		case 'D':
+			force_delete = true
+			fallthrough
 		case 'd':
 			skip_task_read = true
 			index := opt.Value
@@ -114,10 +123,6 @@ func main() {
 				tasks := manager.GetTasksToday()
 				if len(tasks) != 0 {
 					task_deleted = manager.DeleteTask(tasks, index)
-					// Hack to get around the coloration display
-					if task_deleted != nil {
-						task_deleted.due_date = &now
-					}
 					break
 				}
 				// If there are no tasks today then we must try to delete based
@@ -139,6 +144,27 @@ func main() {
 			} else {
 				LogSuccess(task_deleted.String())
 			}
+			if !force_delete && task_deleted.due_date != nil && task_deleted.repeat != nil {
+				// Recreate the task if it has a repeat.
+				*task_deleted.due_date = task_deleted.due_date.Add(*task_deleted.repeat)
+				manager.SaveTask(*task_deleted)
+			}
+			force_delete = false
+		case 'r':
+			days, err := strconv.ParseInt(opt.Value, 10, 32)
+			if err != nil {
+				LogError(fmt.Sprintf("Bad delay time: %s", opt.Value))
+				os.Exit(1)
+			}
+			if days <= 0 {
+				LogError("Delay time must be a positive, non-zero number")
+				os.Exit(1)
+			}
+			hours, err := time.ParseDuration(fmt.Sprintf("%dh", days*24))
+			if err != nil {
+				panic(err)
+			}
+			repeat = &hours
 		case 'x':
 			skip_task_read = true
 			index := opt.Value
@@ -160,12 +186,12 @@ func main() {
 				os.Exit(1)
 			}
 			if task_removed.due_date == nil {
-				manager.SaveTask(NewTask(task_removed.body_content, nil))
+				manager.SaveTask(NewTask(task_removed.body_content, nil, task_removed.repeat))
 				LogError("Cannot delay a todo with no deadline!")
 				os.Exit(1)
 			}
 			new_date := task_removed.due_date.AddDate(0, 0, 1)
-			manager.SaveTask(NewTask(task_removed.body_content, &new_date))
+			manager.SaveTask(NewTask(task_removed.body_content, &new_date, task_removed.repeat))
 			LogError(fmt.Sprintf("Task \"%s\" delayed until %s",
 				task_removed.body_content, new_date.Weekday()))
 			manager.storage_directory = old_storage
@@ -205,10 +231,10 @@ func main() {
 		return
 	}
 	if input := strings.Join(os.Args[others+1:], " "); len(os.Args) > 1 && input != "" {
-		manager.SaveTask(NewTask(input, due_date))
+		manager.SaveTask(NewTask(input, due_date, repeat))
 	} else {
 		reader := bufio.NewReader(os.Stdin)
-		manager.SaveTask(NewTask(readInTask(reader), due_date))
+		manager.SaveTask(NewTask(readInTask(reader), due_date, repeat))
 	}
 }
 
