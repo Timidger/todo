@@ -244,6 +244,18 @@ func (manager *TaskManager) GetTasks() Tasks {
 	return tasks
 }
 
+func (manager *TaskManager) GetTasksDay(date time.Time) []Task {
+	tasks_ := manager.GetTasks()
+	tasks := make(Tasks, 0)
+	for _, task := range tasks_ {
+		if task.DueOn(date) {
+			tasks = append(tasks, task)
+		}
+	}
+	sort.Sort(tasks)
+	return tasks
+}
+
 func (manager *TaskManager) GetTasksToday() []Task {
 	tasks_ := manager.GetTasks()
 	tasks := make(Tasks, 0)

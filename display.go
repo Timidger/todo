@@ -54,7 +54,7 @@ func DisplayTasksLong(tasks Tasks) {
 			day_header := fmt.Sprintf("%-40v\t%v\n",
 				cur_day.Format("Monday")+":",
 				cur_day.Format(EXPLICIT_TIME_FORMAT))
-			if task.DueBeforeToday() {
+			if task.DueBefore(time.Now()) {
 				day_header = RED + day_header + RESET
 			} else if task.DueAfter(time.Now().AddDate(0, 0, 6)) {
 				day_header = GREY + day_header + RESET

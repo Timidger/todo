@@ -36,7 +36,7 @@ const RELATIVE_TIME_FORMAT = "Monday MST"
 
 const (
 	LISTING_ALL = iota
-	LISTING_TODAY
+	LISTING_DAY
 )
 
 func main() {
@@ -51,7 +51,7 @@ func main() {
 	var repeat *time.Duration = nil
 	skip_task_read := false
 	force_delete := false
-	listing := LISTING_TODAY
+	listing := LISTING_DAY
 	for _, opt := range opts {
 		switch opt.Option {
 		case 't':
@@ -94,17 +94,28 @@ func main() {
 			fmt.Printf(help_message)
 			return
 		case 'l':
-			listing = LISTING_TODAY
+			listing = LISTING_DAY
 			skip_task_read = true
-			tasks := manager.GetTasksToday()
-			if len(tasks) == 0 {
-				tasks = manager.GetTasks()
-				if len(tasks) != 0 {
-					DisplayTasksLong(tasks)
+			var tasks Tasks
+			is_today := true
+			if due_date == nil || due_date.Before(time.Now()) {
+				tasks = manager.GetTasksToday()
+				if len(tasks) == 0 {
+					tasks = manager.GetTasks()
+					if len(tasks) != 0 {
+						DisplayTasksLong(tasks)
+					}
+					break
 				}
-				break
+			} else {
+				is_today = false
+				tasks = manager.GetTasksDay(*due_date)
 			}
-			DisplayTasks(tasks)
+			if is_today {
+				DisplayTasks(tasks)
+			} else {
+				DisplayTasksLong(tasks)
+			}
 		case 'a':
 			// We do the listing down below, this is so if this is
 			// paired with actions like delete we don't print everything to
@@ -119,8 +130,15 @@ func main() {
 			index := opt.Value
 			var task_deleted *Task
 			switch listing {
-			case LISTING_TODAY:
-				tasks := manager.GetTasksToday()
+			case LISTING_DAY:
+				var tasks Tasks
+				if due_date == nil || due_date.Before(time.Now()) {
+					// NOTE This is a special case: we want everything due today
+					// or before today with this call..
+					tasks = manager.GetTasksToday()
+				} else {
+					tasks = manager.GetTasksDay(*due_date)
+				}
 				if len(tasks) != 0 {
 					task_deleted = manager.DeleteTask(tasks, index)
 					break
@@ -172,7 +190,7 @@ func main() {
 			switch listing {
 			case LISTING_ALL:
 				tasks = manager.GetTasks()
-			case LISTING_TODAY:
+			case LISTING_DAY:
 				tasks = manager.GetTasksToday()
 			}
 			task_removed := manager.DeleteTask(tasks, index)

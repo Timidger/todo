@@ -87,7 +87,7 @@ func NewTask(text string, due_date *time.Time, repeat *time.Duration) Task {
 
 // Format just the task body
 func (task *Task) FormatTask() string {
-	if task.DueBeforeToday() {
+	if task.DueBefore(time.Now()) {
 		return RED + task.String() + RESET
 	} else if task.DueAfter(time.Now().AddDate(0, 0, 6)) {
 		return GREY + task.String() + RESET
@@ -95,7 +95,20 @@ func (task *Task) FormatTask() string {
 	return task.String()
 }
 
+/// Determines if a task is due exactly on this day. Not before, not after.
+func (task *Task) DueOn(date time.Time) bool {
+	if task.due_date == nil {
+		return false
+	}
+	if !task.due_date.Before(date) || task.DueBefore(date) {
+		return false
+	}
+	return true
+}
+
 // Determines if a task is due today (or any days before today)
+//
+// NOTE This is NOT a special case of Task.DueOn.
 func (task *Task) DueToday() bool {
 	if task.due_date == nil {
 		return false
@@ -104,21 +117,20 @@ func (task *Task) DueToday() bool {
 }
 
 /// Determines if a task is due before today.
-func (task *Task) DueBeforeToday() bool {
+func (task *Task) DueBefore(date time.Time) bool {
 	if task.due_date == nil {
 		return false
 	}
-	now := time.Now()
-	day := string(strconv.Itoa(now.Day()))
-	month := string(strconv.Itoa(int(now.Month())))
-	if now.Day() < 10 {
+	day := string(strconv.Itoa(date.Day()))
+	month := string(strconv.Itoa(int(date.Month())))
+	if date.Day() < 10 {
 		day = "0" + day
 	}
-	if now.Month() < 10 {
+	if date.Month() < 10 {
 		month = "0" + month
 	}
 	today, err := time.Parse(EXPLICIT_TIME_FORMAT,
-		fmt.Sprintf("%v/%v/%v EDT", now.Year(), month, day))
+		fmt.Sprintf("%v/%v/%v EDT", date.Year(), month, day))
 	if err != nil {
 		panic(err)
 	}
