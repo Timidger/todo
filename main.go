@@ -153,6 +153,9 @@ func main() {
 				}
 				if len(tasks) != 0 {
 					task_deleted = manager.DeleteTask(tasks, index)
+					if task_deleted != nil {
+						all_tasks.RemoveFirst(*task_deleted)
+					}
 					break
 				}
 				// If there are no tasks today then we must try to delete based
@@ -161,6 +164,9 @@ func main() {
 				fallthrough
 			case LISTING_ALL:
 				task_deleted = manager.DeleteTask(*all_tasks, index)
+				if task_deleted != nil {
+					all_tasks.RemoveFirst(*task_deleted)
+				}
 			default:
 				panic(fmt.Sprintf("Unknown flag %v", listing))
 			}
@@ -205,25 +211,29 @@ func main() {
 			case LISTING_DAY:
 				tasks = all_tasks.FilterTasksDueBeforeToday()
 			}
-			task_removed := manager.DeleteTask(tasks, index)
-			old_storage := manager.storage_directory
-			if task_removed.category != nil {
-				manager.storage_directory =
-					path.Join(manager.storage_directory, *task_removed.category)
+			task_deleted := manager.DeleteTask(tasks, index)
+			if task_deleted == nil {
+				LogError(fmt.Sprintf("Bad index \"%s\"", index))
+				os.Exit(1)
 			}
-			if task_removed == nil {
+			old_storage := manager.storage_directory
+			if task_deleted.category != nil {
+				manager.storage_directory =
+					path.Join(manager.storage_directory, *task_deleted.category)
+			}
+			if task_deleted == nil {
 				LogError(fmt.Sprintf("Bad index\"%s\"", index))
 				os.Exit(1)
 			}
-			if task_removed.due_date == nil {
-				manager.SaveTask(NewTask(task_removed.body_content, nil, task_removed.repeat))
+			if task_deleted.due_date == nil {
+				manager.SaveTask(NewTask(task_deleted.body_content, nil, task_deleted.repeat))
 				LogError("Cannot delay a todo with no deadline!")
 				os.Exit(1)
 			}
-			new_date := task_removed.due_date.AddDate(0, 0, 1)
-			manager.SaveTask(NewTask(task_removed.body_content, &new_date, task_removed.repeat))
+			new_date := task_deleted.due_date.AddDate(0, 0, 1)
+			manager.SaveTask(NewTask(task_deleted.body_content, &new_date, task_deleted.repeat))
 			LogError(fmt.Sprintf("Task \"%s\" delayed until %s",
-				task_removed.body_content, new_date.Weekday()))
+				task_deleted.body_content, new_date.Weekday()))
 			manager.storage_directory = old_storage
 		case 'S':
 			manager.storage_directory = opt.Value

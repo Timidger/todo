@@ -241,6 +241,15 @@ func (manager *TaskManager) GetTasks() Tasks {
 	return tasks
 }
 
+func (tasks *Tasks) RemoveFirst(to_remove Task) {
+	for i, task := range *tasks {
+		if task == to_remove {
+			*tasks = append((*tasks)[:i], (*tasks)[i+1:]...)
+			return
+		}
+	}
+}
+
 func (tasks_ Tasks) FilterTasksDueOnDay(date time.Time) []Task {
 	tasks := make(Tasks, 0)
 	for _, task := range tasks_ {
