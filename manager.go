@@ -197,15 +197,12 @@ func (manager *TaskManager) get_tasks_helper() Tasks {
 			panic(fmt.Sprintf("Invalid UTF-8 string: %v", bytes))
 		}
 		lines := strings.SplitN(string(bytes), "\n", 2)
-		if len(lines) == 1 {
+		time_parts := strings.SplitN(lines[0], "\t", 2)
+		var due_date time.Time
+		due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, time_parts[0])
+		if len(lines) == 1 || err != nil {
 			task.body_content = string(bytes)
 		} else {
-			time_parts := strings.SplitN(lines[0], "\t", 2)
-			var due_date time.Time
-			due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, time_parts[0])
-			if err != nil {
-				panic(err)
-			}
 			if len(time_parts) == 2 && time_parts[1] != "" {
 				duration, err := time.ParseDuration(time_parts[1])
 				if err != nil {
