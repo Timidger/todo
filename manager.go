@@ -241,8 +241,7 @@ func (manager *TaskManager) GetTasks() Tasks {
 	return tasks
 }
 
-func (manager *TaskManager) GetTasksDay(date time.Time) []Task {
-	tasks_ := manager.GetTasks()
+func (tasks_ Tasks) FilterTasksDueOnDay(date time.Time) []Task {
 	tasks := make(Tasks, 0)
 	for _, task := range tasks_ {
 		if task.DueOn(date) {
@@ -253,8 +252,7 @@ func (manager *TaskManager) GetTasksDay(date time.Time) []Task {
 	return tasks
 }
 
-func (manager *TaskManager) GetTasksToday() []Task {
-	tasks_ := manager.GetTasks()
+func (tasks_ Tasks) FilterTasksDueBeforeToday() []Task {
 	tasks := make(Tasks, 0)
 	for _, task := range tasks_ {
 		if task.DueToday() {

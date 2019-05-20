@@ -39,6 +39,16 @@ const (
 	LISTING_DAY
 )
 
+var tasks *Tasks = nil
+
+func get_tasks(manager *TaskManager) *Tasks {
+	if tasks == nil {
+		tasks_ := manager.GetTasks()
+		tasks = &tasks_
+	}
+	return tasks
+}
+
 func main() {
 	opts, others, err := getopt.Getopts(os.Args[1:], "nLhalt:d:x:D:S:C:c:r:")
 	if err != nil {
@@ -94,14 +104,15 @@ func main() {
 			fmt.Printf(help_message)
 			return
 		case 'l':
+			all_tasks := get_tasks(&manager)
 			listing = LISTING_DAY
 			skip_task_read = true
-			var tasks Tasks
 			is_today := true
+			var tasks Tasks
 			if due_date == nil || due_date.Before(time.Now()) {
-				tasks = manager.GetTasksToday()
+				tasks = all_tasks.FilterTasksDueBeforeToday()
 				if len(tasks) == 0 {
-					tasks = manager.GetTasks()
+					tasks = *all_tasks
 					if len(tasks) != 0 {
 						DisplayTasksLong(tasks)
 					}
@@ -109,7 +120,7 @@ func main() {
 				}
 			} else {
 				is_today = false
-				tasks = manager.GetTasksDay(*due_date)
+				tasks = all_tasks.FilterTasksDueOnDay(*due_date)
 			}
 			if is_today {
 				DisplayTasks(tasks)
@@ -126,6 +137,7 @@ func main() {
 			force_delete = true
 			fallthrough
 		case 'd':
+			all_tasks := get_tasks(&manager)
 			skip_task_read = true
 			index := opt.Value
 			var task_deleted *Task
@@ -135,9 +147,9 @@ func main() {
 				if due_date == nil || due_date.Before(time.Now()) {
 					// NOTE This is a special case: we want everything due today
 					// or before today with this call..
-					tasks = manager.GetTasksToday()
+					tasks = all_tasks.FilterTasksDueBeforeToday()
 				} else {
-					tasks = manager.GetTasksDay(*due_date)
+					tasks = all_tasks.FilterTasksDueOnDay(*due_date)
 				}
 				if len(tasks) != 0 {
 					task_deleted = manager.DeleteTask(tasks, index)
@@ -148,8 +160,7 @@ func main() {
 				// tasks today.
 				fallthrough
 			case LISTING_ALL:
-				tasks := manager.GetTasks()
-				task_deleted = manager.DeleteTask(tasks, index)
+				task_deleted = manager.DeleteTask(*all_tasks, index)
 			default:
 				panic(fmt.Sprintf("Unknown flag %v", listing))
 			}
@@ -184,14 +195,15 @@ func main() {
 			}
 			repeat = &hours
 		case 'x':
+			all_tasks := get_tasks(&manager)
 			skip_task_read = true
 			index := opt.Value
 			var tasks []Task
 			switch listing {
 			case LISTING_ALL:
-				tasks = manager.GetTasks()
+				tasks = *all_tasks
 			case LISTING_DAY:
-				tasks = manager.GetTasksToday()
+				tasks = all_tasks.FilterTasksDueBeforeToday()
 			}
 			task_removed := manager.DeleteTask(tasks, index)
 			old_storage := manager.storage_directory
@@ -239,9 +251,9 @@ func main() {
 	// if skip_task_read is set then we have done an action that means we should
 	// not print this to stdout due to the chaining rule described above.
 	if listing == LISTING_ALL && !skip_task_read {
-		tasks := manager.GetTasks()
-		if len(tasks) != 0 {
-			DisplayTasksLong(tasks)
+		all_tasks := get_tasks(&manager)
+		if len(*all_tasks) != 0 {
+			DisplayTasksLong(*all_tasks)
 		}
 		skip_task_read = true
 	}
