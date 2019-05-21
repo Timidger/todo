@@ -279,6 +279,7 @@ func create_dir(directory_path string) {
 			panic(err)
 		}
 	} else if err != nil {
-		panic(err)
+		LogError(fmt.Sprintf("Could not read task storage: %v", err))
+		os.Exit(1)
 	}
 }
