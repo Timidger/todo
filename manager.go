@@ -73,14 +73,17 @@ type TaskManager struct {
 
 // Saves a new task to disk
 func (manager *TaskManager) SaveTask(task Task) {
-	create_dir(manager.storage_directory)
+	storage_dir := manager.storage_directory
+	if task.category != nil && path.Base(storage_dir) != *task.category {
+		storage_dir = path.Join(storage_dir, *task.category)
+	}
+	create_dir(storage_dir)
 	sha := sha1.New()
 	sha.Write([]byte(task.body_content))
 	// Also use the storage directory name as part of the hash,
 	// this is to avoid collisions across categories.
-	sha.Write([]byte(path.Base(manager.storage_directory)))
-	save_path := path.Join(manager.storage_directory,
-		fmt.Sprintf("%x", sha.Sum(nil))+".todo")
+	sha.Write([]byte(path.Base(storage_dir)))
+	save_path := path.Join(storage_dir, fmt.Sprintf("%x", sha.Sum(nil))+".todo")
 	if _, err := os.Stat(save_path); !os.IsNotExist(err) {
 		fmt.Println("You have already made that a task")
 		os.Exit(1)

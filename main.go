@@ -216,25 +216,15 @@ func main() {
 				LogError(fmt.Sprintf("Bad index \"%s\"", index))
 				os.Exit(1)
 			}
-			old_storage := manager.storage_directory
-			if task_deleted.category != nil {
-				manager.storage_directory =
-					path.Join(manager.storage_directory, *task_deleted.category)
-			}
-			if task_deleted == nil {
-				LogError(fmt.Sprintf("Bad index\"%s\"", index))
-				os.Exit(1)
-			}
 			if task_deleted.due_date == nil {
 				manager.SaveTask(NewTask(task_deleted.body_content, nil, task_deleted.repeat))
 				LogError("Cannot delay a todo with no deadline!")
 				os.Exit(1)
 			}
-			new_date := task_deleted.due_date.AddDate(0, 0, 1)
-			manager.SaveTask(NewTask(task_deleted.body_content, &new_date, task_deleted.repeat))
+			*task_deleted.due_date = task_deleted.due_date.AddDate(0, 0, 1)
+			manager.SaveTask(*task_deleted)
 			LogError(fmt.Sprintf("Task \"%s\" delayed until %s",
-				task_deleted.body_content, new_date.Weekday()))
-			manager.storage_directory = old_storage
+				task_deleted.body_content, task_deleted.due_date.Weekday()))
 		case 'S':
 			manager.storage_directory = opt.Value
 		case 'c':
