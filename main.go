@@ -223,7 +223,7 @@ func main() {
 			}
 			*task_deleted.due_date = task_deleted.due_date.AddDate(0, 0, 1)
 			manager.SaveTask(*task_deleted)
-			LogError(fmt.Sprintf("Task \"%s\" delayed until %s",
+			(fmt.Printf("Task \"%s\" delayed until %s\n",
 				task_deleted.body_content, task_deleted.due_date.Weekday()))
 		case 'S':
 			manager.storage_directory = opt.Value
