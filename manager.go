@@ -97,14 +97,14 @@ func (manager *TaskManager) SaveTask(task Task) {
 		if _, err := new.WriteString(fmt.Sprintf("%v\t", task.due_date.Format(EXPLICIT_TIME_FORMAT))); err != nil {
 			panic(err)
 		}
-	}
-	if task.repeat != nil {
-		if _, err := new.WriteString(task.repeat.String()); err != nil {
+		if task.repeat != nil {
+			if _, err := new.WriteString(task.repeat.String()); err != nil {
+				panic(err)
+			}
+		}
+		if _, err := new.WriteString("\n"); err != nil {
 			panic(err)
 		}
-	}
-	if _, err := new.WriteString("\n"); err != nil {
-		panic(err)
 	}
 	if _, err := new.WriteString(task.body_content); err != nil {
 		panic(err)
