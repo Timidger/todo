@@ -113,29 +113,30 @@ func (manager *TaskManager) SaveTask(task Task) {
 
 /// Deletes a task by index
 func (manager *TaskManager) DeleteTask(tasks Tasks, task_index string) *Task {
-	for i, task := range tasks {
-		if task_index == task.index {
-			if err := os.Remove(tasks[i].file_name); err != nil {
-				panic(err)
-			}
-			tasks = append(tasks[:i], tasks[i+1:]...)
-			return &task
-		}
-	}
-	// If exact match couldn't be found see if there's a unique match using
-	// the full length.
 	to_delete_index := -1
 	for i, task := range tasks {
-		if task_index == task.full_index[0:len(task_index)] {
-			if to_delete_index != -1 {
-				return nil
-			}
+		if task_index == task.index {
 			to_delete_index = i
+			break
+		}
+	}
+
+	// If exact match couldn't be found see if there's a unique match using
+	// the full length.
+	if to_delete_index == -1 {
+		for i, task := range tasks {
+			if task_index == task.full_index[0:len(task_index)] {
+				if to_delete_index != -1 {
+					return nil
+				}
+				to_delete_index = i
+			}
 		}
 	}
 	if to_delete_index == -1 {
 		return nil
 	}
+
 	if err := os.Remove(tasks[to_delete_index].file_name); err != nil {
 		panic(err)
 	}
