@@ -182,7 +182,10 @@ func main() {
 			if !force_delete && task_deleted.due_date != nil && task_deleted.repeat != nil {
 				// Recreate the task if it has a repeat.
 				*task_deleted.due_date = task_deleted.due_date.Add(*task_deleted.repeat)
-				manager.SaveTask(*task_deleted)
+				if err := manager.SaveTask(*task_deleted); err != nil {
+					LogError(err.Error())
+					os.Exit(1)
+				}
 			}
 			force_delete = false
 		case 'r':
@@ -217,12 +220,18 @@ func main() {
 				os.Exit(1)
 			}
 			if task_deleted.due_date == nil {
-				manager.SaveTask(NewTask(task_deleted.body_content, nil, task_deleted.repeat))
+				err := manager.SaveTask(NewTask(task_deleted.body_content, nil, task_deleted.repeat))
+				if err != nil {
+					panic(err)
+				}
 				LogError("Cannot delay a todo with no deadline!")
 				os.Exit(1)
 			}
 			*task_deleted.due_date = task_deleted.due_date.AddDate(0, 0, 1)
-			manager.SaveTask(*task_deleted)
+			if err := manager.SaveTask(*task_deleted); err != nil {
+				LogError(err.Error())
+				os.Exit(1)
+			}
 			(fmt.Printf("Task \"%s\" delayed until %s\n",
 				task_deleted.body_content, task_deleted.due_date.Weekday()))
 		case 'S':
@@ -261,10 +270,14 @@ func main() {
 		return
 	}
 	if input := strings.Join(os.Args[others+1:], " "); len(os.Args) > 1 && input != "" {
-		manager.SaveTask(NewTask(input, due_date, repeat))
+		err = manager.SaveTask(NewTask(input, due_date, repeat))
 	} else {
 		reader := bufio.NewReader(os.Stdin)
-		manager.SaveTask(NewTask(readInTask(reader), due_date, repeat))
+		err = manager.SaveTask(NewTask(readInTask(reader), due_date, repeat))
+	}
+	if err != nil {
+		LogError(err.Error())
+		os.Exit(1)
 	}
 }
 

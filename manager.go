@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/sha1"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -72,7 +73,7 @@ type TaskManager struct {
 }
 
 // Saves a new task to disk
-func (manager *TaskManager) SaveTask(task Task) {
+func (manager *TaskManager) SaveTask(task Task) error {
 	storage_dir := manager.storage_directory
 	if task.category != nil && path.Base(storage_dir) != *task.category {
 		storage_dir = path.Join(storage_dir, *task.category)
@@ -85,8 +86,7 @@ func (manager *TaskManager) SaveTask(task Task) {
 	sha.Write([]byte(path.Base(storage_dir)))
 	save_path := path.Join(storage_dir, fmt.Sprintf("%x", sha.Sum(nil))+".todo")
 	if _, err := os.Stat(save_path); !os.IsNotExist(err) {
-		fmt.Println("You have already made that a task")
-		os.Exit(1)
+		return errors.New("You have already made that a task")
 	}
 	new, err := os.Create(save_path)
 	if err != nil {
@@ -107,8 +107,9 @@ func (manager *TaskManager) SaveTask(task Task) {
 		}
 	}
 	if _, err := new.WriteString(task.body_content); err != nil {
-		panic(err)
+		return err
 	}
+	return nil
 }
 
 /// Deletes a task by index
