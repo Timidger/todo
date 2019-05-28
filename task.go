@@ -41,10 +41,11 @@ func (task Task) String() string {
 	if task.category != nil {
 		category_name = "(" + *task.category + ")"
 	}
+	trimmed_content := strings.TrimSuffix(task.body_content, "\n")
 	if len(task.body_content) < CONTENT_LENGTH {
-		return fmt.Sprintf("%-10s%-80v%s", task.index+":", task.body_content, category_name)
+		return fmt.Sprintf("%-10s%-80v%s", task.index+":", trimmed_content, category_name)
 	} else {
-		words := strings.Split(task.body_content, " ")
+		words := strings.Split(trimmed_content, " ")
 		first := true
 		result := ""
 		buffer := ""
