@@ -51,7 +51,7 @@ func DisplayTasksLong(tasks Tasks) {
 		if !printed || !cur_day.Equal(*task.due_date) {
 			printed = true
 			cur_day = task.due_date
-			day_header := fmt.Sprintf("%-40v\t%v\n",
+			day_header := fmt.Sprintf("%-90v%v\n",
 				cur_day.Format("Monday")+":",
 				cur_day.Format(EXPLICIT_TIME_FORMAT))
 			if task.DueBefore(time.Now()) {
