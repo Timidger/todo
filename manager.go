@@ -22,6 +22,12 @@ func (tasks Tasks) Len() int {
 
 func (tasks Tasks) Less(i, j int) bool {
 	if tasks[i].due_date == nil && tasks[j].due_date == nil {
+		if tasks[i].category == nil {
+			return false
+		}
+		if tasks[j].category == nil {
+			return true
+		}
 		return strings.Compare(*tasks[i].category, *tasks[j].category) < 0
 	}
 	if tasks[i].due_date == nil {
