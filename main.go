@@ -50,7 +50,7 @@ func get_tasks(manager *TaskManager) *Tasks {
 }
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args[1:], "nLhalt:d:x:D:S:C:c:r:")
+	opts, others, err := getopt.Getopts(os.Args, "nLhalt:d:x:D:S:C:c:r:")
 	if err != nil {
 		panic(err)
 	}
