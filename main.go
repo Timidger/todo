@@ -269,7 +269,7 @@ func main() {
 	if len(opts) > 0 && skip_task_read {
 		return
 	}
-	if input := strings.Join(os.Args[others+1:], " "); len(os.Args) > 1 && input != "" {
+	if input := strings.Join(os.Args[others:], " "); len(os.Args) > 1 && input != "" {
 		err = manager.SaveTask(NewTask(input, due_date, repeat))
 	} else {
 		reader := bufio.NewReader(os.Stdin)
