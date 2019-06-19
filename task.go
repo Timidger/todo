@@ -13,13 +13,13 @@ const CONTENT_LENGTH int = 75
 
 type Task struct {
 	// The "body" content of the task.
-	body_content string
+	Body_content string
 	// When this task is due and must be done.
 	// If nil then there is no deadline
-	due_date *time.Time
+	Due_date *time.Time
 	// When to repeat this task when it is deleted.
 	// If it is null this task does not repeat.
-	repeat    *time.Duration
+	Repeat    *time.Duration
 	file_name string
 	// The minimal index needed to specify this task
 	index string
@@ -41,8 +41,8 @@ func (task Task) String() string {
 	if task.category != nil {
 		category_name = "(" + *task.category + ")"
 	}
-	trimmed_content := strings.TrimSuffix(task.body_content, "\n")
-	if len(task.body_content) < CONTENT_LENGTH {
+	trimmed_content := strings.TrimSuffix(task.Body_content, "\n")
+	if len(task.Body_content) < CONTENT_LENGTH {
 		return fmt.Sprintf("%-10s%-80v%s", task.index+":", trimmed_content, category_name)
 	} else {
 		words := strings.Split(trimmed_content, " ")
@@ -80,9 +80,9 @@ func NewTask(text string, due_date *time.Time, repeat *time.Duration) Task {
 		os.Exit(1)
 	}
 	var task Task
-	task.body_content = text
-	task.due_date = due_date
-	task.repeat = repeat
+	task.Body_content = text
+	task.Due_date = due_date
+	task.Repeat = repeat
 	return task
 }
 
@@ -98,10 +98,10 @@ func (task *Task) FormatTask() string {
 
 /// Determines if a task is due exactly on this day. Not before, not after.
 func (task *Task) DueOn(date time.Time) bool {
-	if task.due_date == nil {
+	if task.Due_date == nil {
 		return false
 	}
-	if !task.due_date.Before(date) || task.DueBefore(date) {
+	if !task.Due_date.Before(date) || task.DueBefore(date) {
 		return false
 	}
 	return true
@@ -111,15 +111,15 @@ func (task *Task) DueOn(date time.Time) bool {
 //
 // NOTE This is NOT a special case of Task.DueOn.
 func (task *Task) DueToday() bool {
-	if task.due_date == nil {
+	if task.Due_date == nil {
 		return false
 	}
-	return task.due_date.Before(time.Now())
+	return task.Due_date.Before(time.Now())
 }
 
 /// Determines if a task is due before today.
 func (task *Task) DueBefore(date time.Time) bool {
-	if task.due_date == nil {
+	if task.Due_date == nil {
 		return false
 	}
 	day := string(strconv.Itoa(date.Day()))
@@ -135,12 +135,12 @@ func (task *Task) DueBefore(date time.Time) bool {
 	if err != nil {
 		panic(err)
 	}
-	return task.due_date.Before(today)
+	return task.Due_date.Before(today)
 }
 
 func (task *Task) DueAfter(after time.Time) bool {
-	if task.due_date == nil {
+	if task.Due_date == nil {
 		return false
 	}
-	return task.due_date.After(after)
+	return task.Due_date.After(after)
 }

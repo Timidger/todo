@@ -36,21 +36,21 @@ func DisplayTasks(tasks Tasks) {
 func DisplayTasksLong(tasks Tasks) {
 	var cur_day *time.Time = nil
 	for _, task := range tasks {
-		if task.due_date != nil {
-			cur_day = task.due_date
+		if task.Due_date != nil {
+			cur_day = task.Due_date
 			break
 		}
 	}
 	no_deadlines := false
 	printed := false
 	for _, task := range tasks {
-		if cur_day == nil || task.due_date == nil {
+		if cur_day == nil || task.Due_date == nil {
 			no_deadlines = true
 			continue
 		}
-		if !printed || !cur_day.Equal(*task.due_date) {
+		if !printed || !same_day(*cur_day, *task.Due_date) {
 			printed = true
-			cur_day = task.due_date
+			cur_day = task.Due_date
 			day_header := fmt.Sprintf("%-90v%v\n",
 				cur_day.Format("Monday")+":",
 				cur_day.Format(EXPLICIT_TIME_FORMAT))
@@ -66,9 +66,13 @@ func DisplayTasksLong(tasks Tasks) {
 	if no_deadlines {
 		fmt.Printf(GREY + "No Deadline:" + RESET + "\n")
 		for _, task := range tasks {
-			if task.due_date == nil {
+			if task.Due_date == nil {
 				fmt.Printf(GREY+"%s"+RESET+"\n", task.FormatTask())
 			}
 		}
 	}
+}
+
+func same_day(a time.Time, b time.Time) bool {
+	return a.Day() == b.Day() && a.Month() == b.Month() && a.Year() == b.Year()
 }

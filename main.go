@@ -175,13 +175,13 @@ func main() {
 				os.Exit(1)
 			}
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				fmt.Printf(task_deleted.body_content)
+				fmt.Printf(task_deleted.Body_content)
 			} else {
 				LogSuccess(task_deleted.String())
 			}
-			if !force_delete && task_deleted.due_date != nil && task_deleted.repeat != nil {
+			if !force_delete && task_deleted.Due_date != nil && task_deleted.Repeat != nil {
 				// Recreate the task if it has a repeat.
-				*task_deleted.due_date = task_deleted.due_date.Add(*task_deleted.repeat)
+				*task_deleted.Due_date = task_deleted.Due_date.Add(*task_deleted.Repeat)
 				if err := manager.SaveTask(*task_deleted); err != nil {
 					LogError(err.Error())
 					os.Exit(1)
@@ -219,21 +219,21 @@ func main() {
 				LogError(fmt.Sprintf("Bad index \"%s\"", index))
 				os.Exit(1)
 			}
-			if task_deleted.due_date == nil {
-				err := manager.SaveTask(NewTask(task_deleted.body_content, nil, task_deleted.repeat))
+			if task_deleted.Due_date == nil {
+				err := manager.SaveTask(NewTask(task_deleted.Body_content, nil, task_deleted.Repeat))
 				if err != nil {
 					panic(err)
 				}
 				LogError("Cannot delay a todo with no deadline!")
 				os.Exit(1)
 			}
-			*task_deleted.due_date = task_deleted.due_date.AddDate(0, 0, 1)
+			*task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, 1)
 			if err := manager.SaveTask(*task_deleted); err != nil {
 				LogError(err.Error())
 				os.Exit(1)
 			}
 			(fmt.Printf("Task \"%s\" delayed until %s\n",
-				task_deleted.body_content, task_deleted.due_date.Weekday()))
+				task_deleted.Body_content, task_deleted.Due_date.Weekday()))
 		case 'S':
 			manager.storage_directory = opt.Value
 		case 'c':

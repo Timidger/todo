@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/sha1"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -11,7 +12,6 @@ import (
 	"sort"
 	"strings"
 	"time"
-	"unicode/utf8"
 )
 
 type Tasks []Task
@@ -21,7 +21,7 @@ func (tasks Tasks) Len() int {
 }
 
 func (tasks Tasks) Less(i, j int) bool {
-	if tasks[i].due_date == nil && tasks[j].due_date == nil {
+	if tasks[i].Due_date == nil && tasks[j].Due_date == nil {
 		if tasks[i].category == nil {
 			return false
 		}
@@ -30,13 +30,13 @@ func (tasks Tasks) Less(i, j int) bool {
 		}
 		return strings.Compare(*tasks[i].category, *tasks[j].category) < 0
 	}
-	if tasks[i].due_date == nil {
+	if tasks[i].Due_date == nil {
 		return false
 	}
-	if tasks[j].due_date == nil {
+	if tasks[j].Due_date == nil {
 		return true
 	}
-	if tasks[i].due_date.Equal(*tasks[j].due_date) {
+	if tasks[i].Due_date.Equal(*tasks[j].Due_date) {
 		if tasks[i].category == nil {
 			return false
 		}
@@ -45,7 +45,7 @@ func (tasks Tasks) Less(i, j int) bool {
 		}
 		return strings.Compare(*tasks[i].category, *tasks[j].category) < 0
 	}
-	return tasks[i].due_date.Before(*tasks[j].due_date)
+	return tasks[i].Due_date.Before(*tasks[j].Due_date)
 }
 
 func (tasks Tasks) Swap(i, j int) {
@@ -89,7 +89,7 @@ func (manager *TaskManager) SaveTask(task Task) error {
 	}
 	create_dir(storage_dir)
 	sha := sha1.New()
-	sha.Write([]byte(task.body_content))
+	sha.Write([]byte(task.Body_content))
 	// Also use the storage directory name as part of the hash,
 	// this is to avoid collisions across categories.
 	sha.Write([]byte(path.Base(storage_dir)))
@@ -102,20 +102,13 @@ func (manager *TaskManager) SaveTask(task Task) error {
 		panic(err)
 	}
 	defer new.Close()
-	if task.due_date != nil {
-		if _, err := new.WriteString(fmt.Sprintf("%v\t", task.due_date.Format(EXPLICIT_TIME_FORMAT))); err != nil {
-			panic(err)
-		}
-		if task.repeat != nil {
-			if _, err := new.WriteString(task.repeat.String()); err != nil {
-				panic(err)
-			}
-		}
-		if _, err := new.WriteString("\n"); err != nil {
-			panic(err)
-		}
+
+	task_json, err := json.Marshal(task)
+	if err != nil {
+		return err
 	}
-	if _, err := new.WriteString(task.body_content); err != nil {
+
+	if _, err := new.Write(task_json); err != nil {
 		return err
 	}
 	return nil
@@ -207,26 +200,12 @@ func (manager *TaskManager) get_tasks_helper() Tasks {
 		if err != nil {
 			return err
 		}
-		if !utf8.ValidString(string(bytes)) {
-			panic(fmt.Sprintf("Invalid UTF-8 string: %v", bytes))
+		err = json.Unmarshal(bytes, &task)
+		if err != nil {
+			return err
 		}
-		lines := strings.SplitN(string(bytes), "\n", 2)
-		time_parts := strings.SplitN(lines[0], "\t", 2)
-		var due_date time.Time
-		due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, time_parts[0])
-		if len(lines) == 1 || err != nil {
-			task.body_content = string(bytes)
-		} else {
-			if len(time_parts) == 2 && time_parts[1] != "" {
-				duration, err := time.ParseDuration(time_parts[1])
-				if err != nil {
-					panic(err)
-				}
-				task.repeat = &duration
-			}
-			task.due_date = &due_date
-			task.body_content = lines[1]
-		}
+		task.index = file_name
+		task.full_index = file_name
 		tasks = append(tasks, task)
 		return nil
 	})
