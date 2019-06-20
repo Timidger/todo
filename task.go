@@ -15,8 +15,7 @@ type Task struct {
 	// The "body" content of the task.
 	Body_content string
 	// When this task is due and must be done.
-	// If nil then there is no deadline
-	Due_date *time.Time
+	Due_date time.Time
 	// When to repeat this task when it is deleted.
 	// If it is null this task does not repeat.
 	Repeat    *time.Duration
@@ -70,7 +69,7 @@ func (task Task) String() string {
 }
 
 /// Creates a new task, without saving it.
-func NewTask(text string, due_date *time.Time, repeat *time.Duration) Task {
+func NewTask(text string, due_date time.Time, repeat *time.Duration) Task {
 	if !utf8.ValidString(text) {
 		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
 	}
@@ -98,9 +97,6 @@ func (task *Task) FormatTask() string {
 
 /// Determines if a task is due exactly on this day. Not before, not after.
 func (task *Task) DueOn(date time.Time) bool {
-	if task.Due_date == nil {
-		return false
-	}
 	if !task.Due_date.Before(date) || task.DueBefore(date) {
 		return false
 	}
@@ -111,17 +107,11 @@ func (task *Task) DueOn(date time.Time) bool {
 //
 // NOTE This is NOT a special case of Task.DueOn.
 func (task *Task) DueToday() bool {
-	if task.Due_date == nil {
-		return false
-	}
 	return task.Due_date.Before(time.Now())
 }
 
 /// Determines if a task is due before today.
 func (task *Task) DueBefore(date time.Time) bool {
-	if task.Due_date == nil {
-		return false
-	}
 	day := string(strconv.Itoa(date.Day()))
 	month := string(strconv.Itoa(int(date.Month())))
 	if date.Day() < 10 {
@@ -139,8 +129,5 @@ func (task *Task) DueBefore(date time.Time) bool {
 }
 
 func (task *Task) DueAfter(after time.Time) bool {
-	if task.Due_date == nil {
-		return false
-	}
 	return task.Due_date.After(after)
 }

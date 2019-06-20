@@ -27,8 +27,6 @@ const help_message = "Usage of todo:\n" +
 	"  -c <category>   Specify a category\n" +
 	"  -C <category>   Create a new category\n" +
 	"  -L              List all the categories\n" +
-	"  -n              Don't have a deadline for this task\n" +
-	"                  Note that todos with no deadline only appear with -a\n" +
 	"  -S <directory>  Specify a custom todo directory (default is ~/.todo)\n"
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
@@ -50,14 +48,13 @@ func get_tasks(manager *TaskManager) *Tasks {
 }
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args, "nLhalt:d:x:D:S:C:c:r:")
+	opts, others, err := getopt.Getopts(os.Args, "Lhalt:d:x:D:S:C:c:r:")
 	if err != nil {
 		panic(err)
 	}
 	var manager TaskManager
 	manager.storage_directory = path.Join(os.Getenv("HOME"), ".todo/")
-	now := time.Now()
-	due_date := &now
+	due_date := time.Now()
 	var repeat *time.Duration = nil
 	skip_task_read := false
 	force_delete := false
@@ -65,12 +62,9 @@ func main() {
 	for _, opt := range opts {
 		switch opt.Option {
 		case 't':
-			if due_date == nil {
-				due_date = &now
-			}
-			*due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, opt.Value+" EDT")
+			due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, opt.Value+" EDT")
 			if err != nil {
-				*due_date = time.Now()
+				due_date = time.Now()
 				relative_day := 0
 				cur_weekday := int(due_date.Weekday())
 				switch strings.Title(opt.Value) {
@@ -95,9 +89,9 @@ func main() {
 					os.Exit(1)
 				}
 				if cur_weekday < relative_day {
-					*due_date = due_date.AddDate(0, 0, int(relative_day-cur_weekday))
+					due_date = due_date.AddDate(0, 0, int(relative_day-cur_weekday))
 				} else {
-					*due_date = due_date.AddDate(0, 0, 7-(cur_weekday-relative_day))
+					due_date = due_date.AddDate(0, 0, 7-(cur_weekday-relative_day))
 				}
 			}
 		case 'h':
@@ -109,7 +103,7 @@ func main() {
 			skip_task_read = true
 			is_today := true
 			var tasks Tasks
-			if due_date == nil || due_date.Before(time.Now()) {
+			if due_date.Before(time.Now()) {
 				tasks = all_tasks.FilterTasksDueBeforeToday()
 				if len(tasks) == 0 {
 					tasks = *all_tasks
@@ -120,7 +114,7 @@ func main() {
 				}
 			} else {
 				is_today = false
-				tasks = all_tasks.FilterTasksDueOnDay(*due_date)
+				tasks = all_tasks.FilterTasksDueOnDay(due_date)
 			}
 			if is_today {
 				DisplayTasks(tasks)
@@ -144,12 +138,12 @@ func main() {
 			switch listing {
 			case LISTING_DAY:
 				var tasks Tasks
-				if due_date == nil || due_date.Before(time.Now()) {
+				if due_date.Before(time.Now()) {
 					// NOTE This is a special case: we want everything due today
 					// or before today with this call..
 					tasks = all_tasks.FilterTasksDueBeforeToday()
 				} else {
-					tasks = all_tasks.FilterTasksDueOnDay(*due_date)
+					tasks = all_tasks.FilterTasksDueOnDay(due_date)
 				}
 				if len(tasks) != 0 {
 					task_deleted = manager.DeleteTask(tasks, index)
@@ -179,9 +173,9 @@ func main() {
 			} else {
 				LogSuccess(task_deleted.String())
 			}
-			if !force_delete && task_deleted.Due_date != nil && task_deleted.Repeat != nil {
+			if !force_delete && task_deleted.Repeat != nil {
 				// Recreate the task if it has a repeat.
-				*task_deleted.Due_date = task_deleted.Due_date.Add(*task_deleted.Repeat)
+				task_deleted.Due_date = task_deleted.Due_date.Add(*task_deleted.Repeat)
 				if err := manager.SaveTask(*task_deleted); err != nil {
 					LogError(err.Error())
 					os.Exit(1)
@@ -219,15 +213,7 @@ func main() {
 				LogError(fmt.Sprintf("Bad index \"%s\"", index))
 				os.Exit(1)
 			}
-			if task_deleted.Due_date == nil {
-				err := manager.SaveTask(NewTask(task_deleted.Body_content, nil, task_deleted.Repeat))
-				if err != nil {
-					panic(err)
-				}
-				LogError("Cannot delay a todo with no deadline!")
-				os.Exit(1)
-			}
-			*task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, 1)
+			task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, 1)
 			if err := manager.SaveTask(*task_deleted); err != nil {
 				LogError(err.Error())
 				os.Exit(1)
@@ -252,8 +238,6 @@ func main() {
 			for _, category := range categories {
 				fmt.Println(category)
 			}
-		case 'n':
-			due_date = nil
 		}
 
 	}

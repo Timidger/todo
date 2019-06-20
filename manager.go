@@ -21,7 +21,7 @@ func (tasks Tasks) Len() int {
 }
 
 func (tasks Tasks) Less(i, j int) bool {
-	if tasks[i].Due_date == nil && tasks[j].Due_date == nil {
+	if tasks[i].Due_date.Equal(tasks[j].Due_date) {
 		if tasks[i].category == nil {
 			return false
 		}
@@ -30,22 +30,7 @@ func (tasks Tasks) Less(i, j int) bool {
 		}
 		return strings.Compare(*tasks[i].category, *tasks[j].category) < 0
 	}
-	if tasks[i].Due_date == nil {
-		return false
-	}
-	if tasks[j].Due_date == nil {
-		return true
-	}
-	if tasks[i].Due_date.Equal(*tasks[j].Due_date) {
-		if tasks[i].category == nil {
-			return false
-		}
-		if tasks[j].category == nil {
-			return true
-		}
-		return strings.Compare(*tasks[i].category, *tasks[j].category) < 0
-	}
-	return tasks[i].Due_date.Before(*tasks[j].Due_date)
+	return tasks[i].Due_date.Before(tasks[j].Due_date)
 }
 
 func (tasks Tasks) Swap(i, j int) {

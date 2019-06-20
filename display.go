@@ -34,21 +34,14 @@ func DisplayTasks(tasks Tasks) {
 ///
 /// Non-deadline tasks are also displayed.
 func DisplayTasksLong(tasks Tasks) {
-	var cur_day *time.Time = nil
-	for _, task := range tasks {
-		if task.Due_date != nil {
-			cur_day = task.Due_date
-			break
-		}
+	if len(tasks) == 0 {
+		return
 	}
-	no_deadlines := false
+	// NOTE This is the first day because it's assumed to be sorted.
+	cur_day := tasks[0].Due_date
 	printed := false
 	for _, task := range tasks {
-		if cur_day == nil || task.Due_date == nil {
-			no_deadlines = true
-			continue
-		}
-		if !printed || !same_day(*cur_day, *task.Due_date) {
+		if !printed || !same_day(cur_day, task.Due_date) {
 			printed = true
 			cur_day = task.Due_date
 			day_header := fmt.Sprintf("%-90v%v\n",
@@ -62,14 +55,6 @@ func DisplayTasksLong(tasks Tasks) {
 			fmt.Printf(day_header)
 		}
 		fmt.Println(task.FormatTask())
-	}
-	if no_deadlines {
-		fmt.Printf(GREY + "No Deadline:" + RESET + "\n")
-		for _, task := range tasks {
-			if task.Due_date == nil {
-				fmt.Printf(GREY+"%s"+RESET+"\n", task.FormatTask())
-			}
-		}
 	}
 }
 
