@@ -107,7 +107,7 @@ func (task *Task) DueOn(date time.Time) bool {
 //
 // NOTE This is NOT a special case of Task.DueOn.
 func (task *Task) DueToday() bool {
-	return task.Due_date.Before(time.Now())
+	return is_same_day(task.Due_date, time.Now()) || task.Due_date.Before(time.Now())
 }
 
 /// Determines if a task is due before today.
@@ -130,4 +130,8 @@ func (task *Task) DueBefore(date time.Time) bool {
 
 func (task *Task) DueAfter(after time.Time) bool {
 	return task.Due_date.After(after)
+}
+
+func is_same_day(a time.Time, b time.Time) bool {
+	return a.Day() == b.Day() && a.Month() == b.Month() && a.Year() == b.Year()
 }

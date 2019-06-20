@@ -41,7 +41,7 @@ func DisplayTasksLong(tasks Tasks) {
 	cur_day := tasks[0].Due_date
 	printed := false
 	for _, task := range tasks {
-		if !printed || !same_day(cur_day, task.Due_date) {
+		if !printed || !is_same_day(cur_day, task.Due_date) {
 			printed = true
 			cur_day = task.Due_date
 			day_header := fmt.Sprintf("%-90v%v\n",
@@ -56,8 +56,4 @@ func DisplayTasksLong(tasks Tasks) {
 		}
 		fmt.Println(task.FormatTask())
 	}
-}
-
-func same_day(a time.Time, b time.Time) bool {
-	return a.Day() == b.Day() && a.Month() == b.Month() && a.Year() == b.Year()
 }
