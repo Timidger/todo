@@ -14,12 +14,14 @@ const CONTENT_LENGTH int = 75
 type Task struct {
 	// The "body" content of the task.
 	Body_content string
-	// When this task is due and must be done.
+	// The first day when this task will appear. Not the actual due date.
 	Due_date time.Time
 	// When to repeat this task when it is deleted.
 	// If it is null this task does not repeat.
-	Repeat    *time.Duration
-	file_name string
+	Repeat *time.Duration
+	// How many days until this task is actually due.
+	Overdue_days int
+	file_name    string
 	// The minimal index needed to specify this task
 	index string
 	// The full index
@@ -69,7 +71,7 @@ func (task Task) String() string {
 }
 
 /// Creates a new task, without saving it.
-func NewTask(text string, due_date time.Time, repeat *time.Duration) Task {
+func NewTask(text string, due_date time.Time, repeat *time.Duration, overdue_days int) Task {
 	if !utf8.ValidString(text) {
 		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
 	}
@@ -82,12 +84,13 @@ func NewTask(text string, due_date time.Time, repeat *time.Duration) Task {
 	task.Body_content = text
 	task.Due_date = due_date
 	task.Repeat = repeat
+	task.Overdue_days = overdue_days
 	return task
 }
 
 // Format just the task body
 func (task *Task) FormatTask() string {
-	if task.DueBefore(time.Now()) {
+	if task.DueBefore(time.Now().AddDate(0, 0, -task.Overdue_days)) {
 		return RED + task.String() + RESET
 	} else if task.DueAfter(time.Now().AddDate(0, 0, 6)) {
 		return GREY + task.String() + RESET

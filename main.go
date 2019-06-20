@@ -27,6 +27,7 @@ const help_message = "Usage of todo:\n" +
 	"  -c <category>   Specify a category\n" +
 	"  -C <category>   Create a new category\n" +
 	"  -L              List all the categories\n" +
+	"  -n <number>     Days until this task is actually overdue. Default 0, must be positive\n" +
 	"  -S <directory>  Specify a custom todo directory (default is ~/.todo)\n"
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
@@ -48,12 +49,13 @@ func get_tasks(manager *TaskManager) *Tasks {
 }
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args, "Lhalt:d:x:D:S:C:c:r:")
+	opts, others, err := getopt.Getopts(os.Args, "Lhalt:d:x:D:S:C:c:r:n:")
 	if err != nil {
 		panic(err)
 	}
 	var manager TaskManager
 	manager.storage_directory = path.Join(os.Getenv("HOME"), ".todo/")
+	overdue_days := 0
 	due_date := time.Now()
 	var repeat *time.Duration = nil
 	skip_task_read := false
@@ -238,6 +240,17 @@ func main() {
 			for _, category := range categories {
 				fmt.Println(category)
 			}
+		case 'n':
+			days, err := strconv.ParseInt(opt.Value, 10, 32)
+			if err != nil {
+				LogError(fmt.Sprintf("Bad day delay \"%s\", need number", opt.Value))
+				os.Exit(1)
+			}
+			if days <= 0 {
+				LogError("Delay time must be a positive number")
+				os.Exit(1)
+			}
+			overdue_days = int(days)
 		}
 
 	}
@@ -254,10 +267,10 @@ func main() {
 		return
 	}
 	if input := strings.Join(os.Args[others:], " "); len(os.Args) > 1 && input != "" {
-		err = manager.SaveTask(NewTask(input, due_date, repeat))
+		err = manager.SaveTask(NewTask(input, due_date, repeat, overdue_days))
 	} else {
 		reader := bufio.NewReader(os.Stdin)
-		err = manager.SaveTask(NewTask(readInTask(reader), due_date, repeat))
+		err = manager.SaveTask(NewTask(readInTask(reader), due_date, repeat, overdue_days))
 	}
 	if err != nil {
 		LogError(err.Error())
