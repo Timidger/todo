@@ -95,7 +95,7 @@ func (task *Task) FormatTask() string {
 	} else if task.DueAfter(time.Now().AddDate(0, 0, 6)) {
 		return GREY + task.String() + RESET
 	}
-	return task.String()
+	return RESET + task.String()
 }
 
 /// Determines if a task is due exactly on this day. Not before, not after.
