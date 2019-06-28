@@ -42,9 +42,15 @@ func (task Task) String() string {
 	if task.category != nil {
 		category_name = "(" + *task.category + ")"
 	}
+	days_left := ""
+	if task.Overdue_days > 0 {
+		final_due_date := time.Now().AddDate(0, 0, task.Overdue_days)
+		days_left = fmt.Sprintf(" (%d days left)",
+			int(final_due_date.Sub(time.Now()).Hours()/24))
+	}
 	trimmed_content := strings.TrimSuffix(task.Body_content, "\n")
 	if len(task.Body_content) < CONTENT_LENGTH {
-		return fmt.Sprintf("%-10s%-80v%s", task.index+":", trimmed_content, category_name)
+		return fmt.Sprintf("%-10s%-80v%-15s%s", task.index+":", trimmed_content, category_name, days_left)
 	} else {
 		words := strings.Split(trimmed_content, " ")
 		first := true
@@ -54,7 +60,8 @@ func (task Task) String() string {
 			// TODO Deal with empty buffer (e.g. words > CONTENT_LENGTH)
 			if len(buffer)+len(word)+1 > CONTENT_LENGTH {
 				if first {
-					result = fmt.Sprintf("%-10s%-80v%s", task.index+":", buffer, category_name)
+					result = fmt.Sprintf("%-10s%-80v%-15s%s",
+						task.index+":", buffer, category_name, days_left)
 					first = false
 				} else {
 					result += fmt.Sprintf("\n          %v", buffer)
