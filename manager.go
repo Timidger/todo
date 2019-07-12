@@ -125,7 +125,9 @@ func (manager *TaskManager) DeleteTask(tasks Tasks, task_index string) *Task {
 		panic(err)
 	}
 	task := tasks[to_delete_index]
-	tasks = append(tasks[:to_delete_index], tasks[to_delete_index+1:]...)
+	if task.Repeat == nil {
+		tasks = append(tasks[:to_delete_index], tasks[to_delete_index+1:]...)
+	}
 	return &task
 }
 

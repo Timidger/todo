@@ -149,7 +149,7 @@ func main() {
 				}
 				if len(tasks) != 0 {
 					task_deleted = manager.DeleteTask(tasks, index)
-					if task_deleted != nil {
+					if task_deleted != nil && task_deleted.Repeat == nil {
 						all_tasks.RemoveFirst(*task_deleted)
 					}
 					break
@@ -166,6 +166,8 @@ func main() {
 			default:
 				panic(fmt.Sprintf("Unknown flag %v", listing))
 			}
+			// If we delete the same task multiple times we'll need to reload,
+			// so try doing that before giving up.
 			if task_deleted == nil {
 				LogError(fmt.Sprintf("Bad index \"%s\"", index))
 				os.Exit(1)
