@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"strconv"
 	"strings"
@@ -48,7 +49,7 @@ func (task Task) String() string {
 	} else if task.Overdue_days > 0 {
 		final_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
 		days_left = fmt.Sprintf(" (%d days left)",
-			int(final_due_date.Sub(time.Now()).Hours()/24))
+			int(math.Ceil(final_due_date.Sub(time.Now()).Hours()/24)))
 	}
 	trimmed_content := strings.TrimSuffix(task.Body_content, "\n")
 	if len(task.Body_content) < CONTENT_LENGTH {
