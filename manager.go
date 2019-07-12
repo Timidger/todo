@@ -21,12 +21,19 @@ func (tasks Tasks) Len() int {
 }
 
 func (tasks Tasks) Less(i, j int) bool {
-	if tasks[i].category != nil && tasks[j].category != nil {
-		if strings.Compare(*tasks[i].category, *tasks[j].category) < 0 {
+	if tasks[i].category != nil {
+		if tasks[j].category == nil {
 			return false
 		}
+		if tasks[j].category != nil {
+			if strings.Compare(*tasks[i].category, *tasks[j].category) != 0 {
+				return false
+			}
+		}
 	}
-	return tasks[i].Due_date.Before(tasks[j].Due_date)
+	task_i_due_date := tasks[i].Due_date.AddDate(0, 0, tasks[i].Overdue_days)
+	task_j_due_date := tasks[j].Due_date.AddDate(0, 0, tasks[j].Overdue_days)
+	return task_i_due_date.Before(task_j_due_date)
 }
 
 func (tasks Tasks) Swap(i, j int) {
