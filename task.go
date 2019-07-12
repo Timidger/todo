@@ -42,9 +42,11 @@ func (task Task) String() string {
 	if task.category != nil {
 		category_name = "(" + *task.category + ")"
 	}
-	days_left := " (due today)"
-	if task.Overdue_days > 0 {
-		final_due_date := time.Now().AddDate(0, 0, task.Overdue_days)
+	days_left := " "
+	if task.DueBefore(time.Now().AddDate(0, 0, -task.Overdue_days+1)) {
+		days_left = " (due today)"
+	} else if task.Overdue_days > 0 {
+		final_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
 		days_left = fmt.Sprintf(" (%d days left)",
 			int(final_due_date.Sub(time.Now()).Hours()/24))
 	}
