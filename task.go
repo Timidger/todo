@@ -10,7 +10,7 @@ import (
 	"unicode/utf8"
 )
 
-const CONTENT_LENGTH int = 75
+const CONTENT_LENGTH int = 59
 
 type Task struct {
 	// The "body" content of the task.
@@ -53,7 +53,7 @@ func (task Task) String() string {
 	}
 	trimmed_content := strings.TrimSuffix(task.Body_content, "\n")
 	if len(task.Body_content) < CONTENT_LENGTH {
-		return fmt.Sprintf("%-10s%-80v%-15s%s", task.index+":", trimmed_content, category_name, days_left)
+		return fmt.Sprintf("%-10s%-60v%-15s%s", task.index+":", trimmed_content, category_name, days_left)
 	} else {
 		words := strings.Split(trimmed_content, " ")
 		first := true
@@ -63,7 +63,7 @@ func (task Task) String() string {
 			// TODO Deal with empty buffer (e.g. words > CONTENT_LENGTH)
 			if len(buffer)+len(word)+1 > CONTENT_LENGTH {
 				if first {
-					result = fmt.Sprintf("%-10s%-80v%-15s%s",
+					result = fmt.Sprintf("%-10s%-60v%-15s%s",
 						task.index+":", buffer, category_name, days_left)
 					first = false
 				} else {
