@@ -56,6 +56,7 @@ func main() {
 	}
 	var manager TaskManager
 	manager.storage_directory = path.Join(os.Getenv("HOME"), ".todo/")
+	manager.root_storage_directory = manager.storage_directory
 	overdue_days := 0
 	due_date := time.Now()
 	var repeat *time.Duration = nil

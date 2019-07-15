@@ -78,7 +78,8 @@ func (tasks Tasks) GetByHash(hash string) *Task {
 }
 
 type TaskManager struct {
-	storage_directory string
+	root_storage_directory string
+	storage_directory      string
 }
 
 // Saves a new task to disk
