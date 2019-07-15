@@ -197,7 +197,7 @@ func (manager *TaskManager) get_tasks_helper() Tasks {
 
 		_, file_name := filepath.Split(path)
 		split := strings.Split(file_name, ".")
-		if len(split) < 2 || split[1] != ".todo" {
+		if len(split) < 2 || split[1] != "todo" {
 			return nil
 		}
 		file_name = split[0]
