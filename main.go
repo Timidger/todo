@@ -187,6 +187,10 @@ func main() {
 					os.Exit(1)
 				}
 			}
+			// Log in the audit log
+			if !force_delete {
+				AuditLog(*task_deleted, &manager)
+			}
 			force_delete = false
 		case 'r':
 			days, err := strconv.ParseInt(opt.Value, 10, 32)
