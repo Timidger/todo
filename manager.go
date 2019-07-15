@@ -30,6 +30,8 @@ func (tasks Tasks) Less(i, j int) bool {
 				return false
 			}
 		}
+	} else if tasks[j].category != nil {
+		return true
 	}
 	task_i_due_date := tasks[i].Due_date.AddDate(0, 0, tasks[i].Overdue_days)
 	task_j_due_date := tasks[j].Due_date.AddDate(0, 0, tasks[j].Overdue_days)
