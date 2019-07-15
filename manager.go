@@ -26,8 +26,9 @@ func (tasks Tasks) Less(i, j int) bool {
 			return false
 		}
 		if tasks[j].category != nil {
-			if strings.Compare(*tasks[i].category, *tasks[j].category) != 0 {
-				return false
+			comparison := strings.Compare(*tasks[i].category, *tasks[j].category)
+			if comparison != 0 {
+				return comparison < 0
 			}
 		}
 	} else if tasks[j].category != nil {
