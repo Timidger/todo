@@ -67,7 +67,6 @@ func (task Task) String() string {
 		result := ""
 		buffer := ""
 		for _, word := range words {
-			// TODO Deal with empty buffer (e.g. words > CONTENT_LENGTH)
 			if len(buffer)+len(word)+1 > CONTENT_LENGTH {
 				if first {
 					result = fmt.Sprintf("%-10s%-60v%-15s%s",
