@@ -10,7 +10,7 @@ import (
 	"unicode/utf8"
 )
 
-const CONTENT_LENGTH int = 56
+const CONTENT_LENGTH int = 58
 
 type Task struct {
 	// The "body" content of the task.
