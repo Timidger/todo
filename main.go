@@ -205,7 +205,7 @@ func main() {
 			all_tasks := get_tasks(&manager)
 			skip_task_read = true
 			index := opt.Value
-			var tasks []Task
+			var tasks Tasks
 			switch listing {
 			case LISTING_ALL:
 				tasks = *all_tasks
@@ -218,6 +218,7 @@ func main() {
 				os.Exit(1)
 			}
 			task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, 1)
+			*all_tasks.GetByHash(index) = *task_deleted
 			if err := manager.SaveTask(*task_deleted); err != nil {
 				LogError(err.Error())
 				os.Exit(1)

@@ -68,6 +68,15 @@ condense_tasks:
 	return tasks
 }
 
+func (tasks Tasks) GetByHash(hash string) *Task {
+	for i, _ := range tasks {
+		if tasks[i].index == hash || tasks[i].index[0:len(hash)] == hash {
+			return &tasks[i]
+		}
+	}
+	return nil
+}
+
 type TaskManager struct {
 	storage_directory string
 }
