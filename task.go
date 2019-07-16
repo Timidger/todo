@@ -48,7 +48,7 @@ func (task Task) String() string {
 	if task.DueBefore(due_date) {
 		passed_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
 		overdue_days := int(math.Floor(time.Now().Sub(passed_due_date).Hours() / 24))
-		if overdue_days == 0 {
+		if overdue_days <= 0 {
 			days_left = " (due today)"
 		} else {
 			days_left = fmt.Sprintf(" (%d days overdue)", overdue_days)
