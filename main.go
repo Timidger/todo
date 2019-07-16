@@ -192,7 +192,12 @@ func main() {
 			}
 			// Log in the audit log
 			if !force_delete {
+				original_storage_directory := manager.storage_directory
+				if task_deleted.category != nil {
+					manager.storage_directory = path.Join(manager.storage_directory, *task_deleted.category)
+				}
 				manager.AuditLog(*task_deleted)
+				manager.storage_directory = original_storage_directory
 			}
 			force_delete = false
 		case 'r':
