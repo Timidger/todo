@@ -15,20 +15,21 @@ import (
 
 const help_message = "Usage of todo:\n" +
 	"  -h              Show this help message\n" +
-	"  -l              List the things to do today in no particular order\n" +
+	"  -l              List the things to do today by category first and due date\n" +
 	"  -a              List all the things to do, regardless of due date, from soonest to latest\n" +
-	"  -d <index>      Delete a task by index number. If preceded by -a based on full list, not just today\n" +
+	"  -d <index>      Delete a task by index number. If preceded by -a based on full list, not just due now\n" +
 	"  -D <index>      Same as -d but it will not recreate a task that repeats\n" +
 	"  -x <index>      Delay a task by one day. It is suggested you don't do this too often\n" +
 	"  -t <date>       Delay the task until the date\n" +
 	"                  Date uses YYYY/MM/DD. Relative days such as \"Monday\" or \"Tomorrow\" are also supported\n" +
-	"  -r <number>     Repeat this task after a number of days. Must be positive.\n" +
-	"                  Repeat delta is based on the due date, not the day it was deleted\n" +
+	"  -r <number>     Repeat this task after a number of days. Based on the due date, not the day it was deleted\n" +
+	"                  Default 0, Must be positive.\n" +
+	"  -n <number>     Days until this task is actually due. Think of this as \"How many days I want to work on this task\"\n" +
+	"                  Default 0, must be positive\n" +
 	"  -c <category>   Specify a category\n" +
 	"  -C <category>   Create a new category\n" +
 	"  -L              List all the categories\n" +
-	"  -n <number>     Days until this task is actually overdue. Default 0, must be positive\n" +
-	"  -S <directory>  Specify a custom todo directory (default is ~/.todo)\n"
+	"  -S <directory>  Specify a custom todo directory (default is ~/.todo). Primarily used for testing\n"
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
 const RELATIVE_TIME_FORMAT = "Monday MST"
