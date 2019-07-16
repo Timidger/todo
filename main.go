@@ -272,7 +272,7 @@ func main() {
 						continue
 					}
 				}
-				fmt.Printf("%s\n", record.String())
+				fmt.Println(record.String())
 			}
 		}
 
