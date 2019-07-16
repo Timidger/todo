@@ -60,6 +60,7 @@ func main() {
 	manager.storage_directory = path.Join(os.Getenv("HOME"), ".todo/")
 	overdue_days := 0
 	due_date := time.Now()
+	time_set := false
 	var repeat *time.Duration = nil
 	skip_task_read := false
 	force_delete := false
@@ -67,6 +68,7 @@ func main() {
 	for _, opt := range opts {
 		switch opt.Option {
 		case 't':
+			time_set = true
 			due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, opt.Value+" EDT")
 			if err != nil {
 				due_date = time.Now()
@@ -265,6 +267,11 @@ func main() {
 			skip_task_read = true
 			records := manager.AuditRecords()
 			for _, record := range records {
+				if time_set {
+					if record.DateCompleted.Before(due_date) {
+						continue
+					}
+				}
 				fmt.Printf("%s\n", record.String())
 			}
 		}
