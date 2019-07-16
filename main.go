@@ -50,7 +50,7 @@ func get_tasks(manager *TaskManager) *Tasks {
 }
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args, "Lhalt:d:x:D:S:C:c:r:n:")
+	opts, others, err := getopt.Getopts(os.Args, "zLhalt:d:x:D:S:C:c:r:n:")
 	if err != nil {
 		panic(err)
 	}
@@ -189,7 +189,7 @@ func main() {
 			}
 			// Log in the audit log
 			if !force_delete {
-				AuditLog(*task_deleted, &manager)
+				AuditLog(&manager, *task_deleted)
 			}
 			force_delete = false
 		case 'r':
@@ -260,6 +260,12 @@ func main() {
 				os.Exit(1)
 			}
 			overdue_days = int(days)
+		case 'z':
+			skip_task_read = true
+			records := AuditRecords(&manager)
+			for _, record := range records {
+				fmt.Printf("%s\n", record.String())
+			}
 		}
 
 	}
