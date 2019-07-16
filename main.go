@@ -22,6 +22,7 @@ const help_message = "Usage of todo:\n" +
 	"  -x <index>      Delay a task by one day. It is suggested you don't do this too often\n" +
 	"  -t <date>       Delay the task until the date\n" +
 	"                  Date uses YYYY/MM/DD. Relative days such as \"Monday\" or \"Tomorrow\" are also supported\n" +
+	"                  If coupled with -A then it will show logs of any events on or after this date\n" +
 	"  -r <number>     Repeat this task after a number of days. Based on the due date, not the day it was deleted\n" +
 	"                  Default 0, Must be positive.\n" +
 	"  -n <number>     Days until this task is actually due. Think of this as \"How many days I want to work on this task\"\n" +
@@ -29,6 +30,7 @@ const help_message = "Usage of todo:\n" +
 	"  -c <category>   Specify a category\n" +
 	"  -C <category>   Create a new category\n" +
 	"  -L              List all the categories\n" +
+	"  -A              Show audit logs. Can be controlled with -t and -c\n" +
 	"  -S <directory>  Specify a custom todo directory (default is ~/.todo). Primarily used for testing\n"
 
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
@@ -50,7 +52,7 @@ func get_tasks(manager *TaskManager) *Tasks {
 }
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args, "zLhalt:d:x:D:S:C:c:r:n:")
+	opts, others, err := getopt.Getopts(os.Args, "ALhalt:d:x:D:S:C:c:r:n:")
 	if err != nil {
 		panic(err)
 	}
@@ -260,7 +262,7 @@ func main() {
 				os.Exit(1)
 			}
 			overdue_days = int(days)
-		case 'z':
+		case 'A':
 			skip_task_read = true
 			records := AuditRecords(&manager)
 			for _, record := range records {
