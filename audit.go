@@ -61,14 +61,44 @@ func (record Record) Marshal() []string {
 }
 
 func (record Record) String() string {
-	result := fmt.Sprintf("%s\t%v", record.Body_content, record.DateCompleted.Format(EXPLICIT_TIME_FORMAT))
-
+	completed := record.DateCompleted.Format(EXPLICIT_TIME_FORMAT)
 	date_due := record.Due_date.AddDate(0, 0, record.Overdue_days)
 	if date_due.Before(record.DateCompleted) {
 		overdue_days := int(math.Floor(record.DateCompleted.Sub(date_due).Hours() / 24))
-		result += fmt.Sprintf(RED+"\toverdue %d days"+RESET, overdue_days)
+		completed += fmt.Sprintf(RED+"\toverdue %d days"+RESET, overdue_days)
 	}
-	return result
+
+	category_name := ""
+	if record.Category != nil {
+		category_name = *record.Category
+	}
+
+	trimmed_content := strings.TrimSuffix(record.Body_content, "\n")
+	if len(record.Body_content) < CONTENT_LENGTH {
+		return fmt.Sprintf("%-60v%-15s%s", trimmed_content, category_name, completed)
+	} else {
+		words := strings.Split(trimmed_content, " ")
+		first := true
+		result := ""
+		buffer := ""
+		for _, word := range words {
+			if len(buffer)+len(word)+1 > CONTENT_LENGTH {
+				if first {
+					result = fmt.Sprintf("%-60v%-15s%s",
+						buffer, category_name, completed)
+					first = false
+				} else {
+					result += fmt.Sprintf("\n%v", buffer)
+				}
+				buffer = ""
+			}
+			buffer += word + " "
+		}
+		if len(buffer) != 0 {
+			result += fmt.Sprintf("\n%v", buffer)
+		}
+		return result
+	}
 }
 
 func Unmarshal(fields []string) Record {
