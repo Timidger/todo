@@ -1,11 +1,8 @@
 package main
 
 import (
-	"encoding/csv"
 	"fmt"
 	"math"
-	"os"
-	"path"
 	"strconv"
 	"strings"
 	"time"
@@ -27,13 +24,16 @@ func (records Records) Swap(i, j int) {
 }
 
 // NOTE This is an append-only struct.
-// If new fields are added, put them at the end.
+// If new fields are added, put them at the end and update ALL functions.
 type Record struct {
-	Body_content  string
-	Due_date      time.Time
-	Repeat        *time.Duration
-	Overdue_days  int
-	Category      *string
+	Body_content string
+	Due_date     time.Time
+	Repeat       *time.Duration
+	Overdue_days int
+	// This is actually determined at load time again,
+	// since audit logs store the category by virtue of being in
+	// separate directories.
+	Category      string
 	DateCompleted time.Time
 }
 
@@ -45,10 +45,8 @@ func (record Record) Marshal() []string {
 		repeat = record.Repeat.String()
 	}
 	overdue_days := strconv.Itoa(record.Overdue_days)
+	// Category determined at load time, from directory of audit_log
 	category := ""
-	if record.Category != nil {
-		category = *record.Category
-	}
 	date_completed := record.DateCompleted.Format(EXPLICIT_TIME_FORMAT)
 	return []string{
 		body_content,
@@ -69,9 +67,7 @@ func (record Record) String() string {
 	}
 
 	category_name := ""
-	if record.Category != nil {
-		category_name = *record.Category
-	}
+	category_name = record.Category
 
 	trimmed_content := strings.TrimSuffix(record.Body_content, "\n")
 	if len(record.Body_content) < CONTENT_LENGTH {
@@ -114,9 +110,7 @@ func Unmarshal(fields []string) Record {
 	}
 	overdue_days, _ := strconv.ParseInt(fields[3], 10, 32)
 	record.Overdue_days = int(overdue_days)
-	if fields[4] != "" {
-		record.Category = &fields[4]
-	}
+	record.Category = fields[4]
 	record.DateCompleted, _ = time.Parse(EXPLICIT_TIME_FORMAT, fields[5])
 
 	return record
@@ -128,66 +122,4 @@ func Fields() string {
 
 func FieldCount() int {
 	return strings.Count(Fields(), ",") + 1
-}
-
-func AuditLog(manager *TaskManager, task Task) {
-	audit_log_path := path.Join(manager.root_storage_directory, AUDIT_LOG)
-	var audit_log_file *os.File
-	if _, err := os.Stat(audit_log_path); os.IsNotExist(err) {
-		audit_log_file, err = os.OpenFile(audit_log_path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
-		if err != nil {
-			panic(err)
-		}
-		audit_log_file.WriteString("#" + Fields())
-	} else {
-		audit_log_file, err = os.OpenFile(audit_log_path, os.O_APPEND|os.O_WRONLY, 0600)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	defer audit_log_file.Close()
-
-	audit_log := csv.NewWriter(audit_log_file)
-
-	var record Record
-	record.Body_content = task.Body_content
-	record.Due_date = task.Due_date
-	record.Repeat = task.Repeat
-	record.Overdue_days = task.Overdue_days
-	record.Category = task.category
-	record.DateCompleted = time.Now()
-
-	if err := audit_log.Write(record.Marshal()); err != nil {
-		panic(err)
-	}
-	audit_log.Flush()
-}
-
-func AuditRecords(manager *TaskManager) Records {
-	audit_log_path := path.Join(manager.root_storage_directory, AUDIT_LOG)
-	if _, err := os.Stat(audit_log_path); os.IsNotExist(err) {
-		LogError("There are no records yet")
-		return Records{}
-	}
-
-	audit_log_file, err := os.OpenFile(audit_log_path, os.O_RDONLY, 0600)
-	if err != nil {
-		panic(err)
-	}
-	defer audit_log_file.Close()
-
-	audit_log := csv.NewReader(audit_log_file)
-	audit_log.FieldsPerRecord = FieldCount()
-	audit_log.Comment = '#'
-
-	read_records, err := audit_log.ReadAll()
-	if err != nil {
-		panic(err)
-	}
-	var records Records
-	for _, read_record := range read_records {
-		records = append(records, Unmarshal(read_record))
-	}
-	return records
 }

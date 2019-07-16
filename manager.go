@@ -2,6 +2,7 @@ package main
 
 import (
 	"crypto/sha1"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -78,8 +79,7 @@ func (tasks Tasks) GetByHash(hash string) *Task {
 }
 
 type TaskManager struct {
-	root_storage_directory string
-	storage_directory      string
+	storage_directory string
 }
 
 // Saves a new task to disk
@@ -270,6 +270,76 @@ func (tasks_ Tasks) FilterTasksDueBeforeToday() []Task {
 	}
 	sort.Sort(tasks)
 	return tasks
+}
+
+func (manager *TaskManager) AuditLog(task Task) {
+	create_dir(manager.storage_directory)
+	audit_log_path := path.Join(manager.storage_directory, AUDIT_LOG)
+	var audit_log_file *os.File
+	if _, err := os.Stat(audit_log_path); os.IsNotExist(err) {
+		audit_log_file, err = os.OpenFile(audit_log_path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+		if err != nil {
+			panic(err)
+		}
+		audit_log_file.WriteString("#" + Fields())
+	} else {
+		audit_log_file, err = os.OpenFile(audit_log_path, os.O_APPEND|os.O_WRONLY, 0600)
+		if err != nil {
+			panic(err)
+		}
+	}
+
+	defer audit_log_file.Close()
+
+	audit_log := csv.NewWriter(audit_log_file)
+
+	var record Record
+	record.Body_content = task.Body_content
+	record.Due_date = task.Due_date
+	record.Repeat = task.Repeat
+	record.Overdue_days = task.Overdue_days
+	record.DateCompleted = time.Now()
+
+	if err := audit_log.Write(record.Marshal()); err != nil {
+		panic(err)
+	}
+	audit_log.Flush()
+}
+
+func (manager *TaskManager) AuditRecords() Records {
+	create_dir(manager.storage_directory)
+	categories := manager.GetCategories()
+	var records Records
+
+	// Append nil category to get the root audit log
+	for _, category := range append(categories, Category{}) {
+		audit_log_path := path.Join(manager.storage_directory, category.Name, AUDIT_LOG)
+		if _, err := os.Stat(audit_log_path); os.IsNotExist(err) {
+			continue
+		}
+
+		audit_log_file, err := os.OpenFile(audit_log_path, os.O_RDONLY, 0600)
+		if err != nil {
+			panic(err)
+		}
+		defer audit_log_file.Close()
+
+		audit_log := csv.NewReader(audit_log_file)
+		audit_log.FieldsPerRecord = FieldCount()
+		audit_log.Comment = '#'
+
+		read_records, err := audit_log.ReadAll()
+		if err != nil {
+			panic(err)
+		}
+		for _, read_record := range read_records {
+			record := Unmarshal(read_record)
+			record.Category = category.Name
+			records = append(records, record)
+		}
+	}
+
+	return records
 }
 
 // Creates a directory if it does not exist

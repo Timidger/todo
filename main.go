@@ -58,7 +58,6 @@ func main() {
 	}
 	var manager TaskManager
 	manager.storage_directory = path.Join(os.Getenv("HOME"), ".todo/")
-	manager.root_storage_directory = manager.storage_directory
 	overdue_days := 0
 	due_date := time.Now()
 	var repeat *time.Duration = nil
@@ -191,7 +190,7 @@ func main() {
 			}
 			// Log in the audit log
 			if !force_delete {
-				AuditLog(&manager, *task_deleted)
+				manager.AuditLog(*task_deleted)
 			}
 			force_delete = false
 		case 'r':
@@ -264,7 +263,7 @@ func main() {
 			overdue_days = int(days)
 		case 'A':
 			skip_task_read = true
-			records := AuditRecords(&manager)
+			records := manager.AuditRecords()
 			for _, record := range records {
 				fmt.Printf("%s\n", record.String())
 			}
