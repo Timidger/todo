@@ -10,7 +10,7 @@ const (
 	GREY  = "\x1b[90m"
 	RED   = "\x1b[31m"
 	GREEN = "\x1b[32m"
-	RESET = "\x1b[39m"
+	RESET = "\x1b[37m"
 )
 
 func LogSuccess(s string) {
