@@ -33,6 +33,7 @@ const help_message = "Usage of todo:\n" +
 	"  -A              Show audit logs. Can be controlled with -t and -c\n" +
 	"  -S <directory>  Specify a custom todo directory (default is ~/.todo). Primarily used for testing\n"
 
+const RECORD_TIME_FORMAT = "2006/01/02 MST 15:04:05"
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
 const RELATIVE_TIME_FORMAT = "Monday MST"
 

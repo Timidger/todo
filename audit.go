@@ -50,7 +50,7 @@ func (record Record) Marshal() []string {
 	overdue_days := strconv.Itoa(record.Overdue_days)
 	// Category determined at load time, from directory of audit_log
 	category := ""
-	date_completed := record.DateCompleted.Format(EXPLICIT_TIME_FORMAT)
+	date_completed := record.DateCompleted.Format(RECORD_TIME_FORMAT)
 	return []string{
 		body_content,
 		due_date,
@@ -62,12 +62,14 @@ func (record Record) Marshal() []string {
 }
 
 func (record Record) String() string {
-	completed := record.DateCompleted.Format(EXPLICIT_TIME_FORMAT)
+	completed := record.DateCompleted.Format(RECORD_TIME_FORMAT)
 	overdue := ""
 	date_due := record.Due_date.AddDate(0, 0, record.Overdue_days)
 	if date_due.Before(record.DateCompleted) {
 		overdue_days := int(math.Floor(record.DateCompleted.Sub(date_due).Hours() / 24))
-		overdue = fmt.Sprintf(RED+" (overdue %d days)"+RESET, overdue_days)
+		if overdue_days != 0 {
+			overdue = fmt.Sprintf(RED+" (overdue %d days)"+RESET, overdue_days)
+		}
 	}
 
 	category_name := ""
@@ -90,14 +92,14 @@ func (record Record) String() string {
 						completed, buffer, category_name, overdue)
 					first = false
 				} else {
-					result += fmt.Sprintf("\n                %v", buffer)
+					result += fmt.Sprintf("\n                         %v", buffer)
 				}
 				buffer = ""
 			}
 			buffer += word + " "
 		}
 		if len(buffer) != 0 {
-			result += fmt.Sprintf("\n                %v", buffer)
+			result += fmt.Sprintf("\n                         %v", buffer)
 		}
 		return result
 	}
@@ -117,7 +119,7 @@ func Unmarshal(fields []string) Record {
 	overdue_days, _ := strconv.ParseInt(fields[3], 10, 32)
 	record.Overdue_days = int(overdue_days)
 	record.Category = fields[4]
-	record.DateCompleted, _ = time.Parse(EXPLICIT_TIME_FORMAT, fields[5])
+	record.DateCompleted, _ = time.Parse(RECORD_TIME_FORMAT, fields[5])
 
 	return record
 }
