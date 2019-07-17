@@ -91,6 +91,9 @@ func main() {
 					relative_day = 6
 				case "Tomorrow":
 					relative_day = (cur_weekday + 1) % 7
+				case "Yesterday":
+					due_date = due_date.AddDate(0, 0, -1)
+					continue
 				default:
 					LogError(fmt.Sprintf("Bad date: %s", opt.Value))
 					os.Exit(1)
