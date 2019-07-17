@@ -296,7 +296,8 @@ func main() {
 			records := manager.AuditRecords()
 			for _, record := range records {
 				if time_set {
-					if record.DateCompleted.Before(due_date.AddDate(0, 0, -1)) {
+					midnight := time.Date(due_date.Year(), due_date.Month(), due_date.Day(), 0, 0, 0, 0, time.Local)
+					if record.DateCompleted.Before(midnight) {
 						continue
 					}
 				}
