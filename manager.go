@@ -339,6 +339,8 @@ func (manager *TaskManager) AuditRecords() Records {
 		}
 	}
 
+	sort.Sort(records)
+
 	return records
 }
 

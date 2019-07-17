@@ -17,6 +17,9 @@ func (records Records) Len() int {
 }
 
 func (records Records) Less(i, j int) bool {
+	if records[i].DateCompleted.Equal(records[j].DateCompleted) {
+		return true
+	}
 	return records[i].DateCompleted.Before(records[j].DateCompleted)
 }
 func (records Records) Swap(i, j int) {
