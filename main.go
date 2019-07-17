@@ -57,7 +57,8 @@ func get_tasks(manager *TaskManager) *Tasks {
 func main() {
 	opts, others, err := getopt.Getopts(os.Args, "ALhalt:d:x:D:S:C:c:r:n:s:")
 	if err != nil {
-		panic(err)
+		fmt.Printf("%s", help_message)
+		return
 	}
 	var manager TaskManager
 	manager.storage_directory = path.Join(os.Getenv("HOME"), ".todo/")
@@ -113,7 +114,7 @@ func main() {
 				}
 			}
 		case 'h':
-			fmt.Printf(help_message)
+			fmt.Printf("%s", help_message)
 			return
 		case 'l':
 			all_tasks := get_tasks(&manager)
