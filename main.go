@@ -20,6 +20,8 @@ const help_message = "Usage of todo:\n" +
 	"  -d <index>      Delete a task by index number. If preceded by -a based on full list, not just due now\n" +
 	"  -D <index>      Same as -d but it will not recreate a task that repeats\n" +
 	"  -x <index>      Delay a task by one day. It is suggested you don't do this too often\n" +
+	"  -s <index>      Skip a task, deleting it but not logging it. This is only valid for repeat tasks.\n" +
+	"                  Note that the task will be regenerated, if that's not what you want see -D\n" +
 	"  -t <date>       Delay the task until the date\n" +
 	"                  Date uses YYYY/MM/DD. Relative days such as \"Monday\" or \"Tomorrow\" are also supported\n" +
 	"                  If coupled with -A then it will show logs of any events on or after this date\n" +
@@ -53,7 +55,7 @@ func get_tasks(manager *TaskManager) *Tasks {
 }
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args, "ALhalt:d:x:D:S:C:c:r:n:")
+	opts, others, err := getopt.Getopts(os.Args, "ALhalt:d:x:D:S:C:c:r:n:s:")
 	if err != nil {
 		panic(err)
 	}
@@ -65,6 +67,7 @@ func main() {
 	var repeat *time.Duration = nil
 	skip_task_read := false
 	force_delete := false
+	skip_repeat := false
 	listing := LISTING_DAY
 	for _, opt := range opts {
 		switch opt.Option {
@@ -145,6 +148,17 @@ func main() {
 		case 'D':
 			force_delete = true
 			fallthrough
+		case 's':
+			// Handles the fallthrough elegantly
+			if !force_delete {
+				skip_task := get_tasks(&manager).GetByHash(opt.Value)
+				if skip_task.Repeat == nil {
+					LogError("Can only skip repeat tasks")
+					os.Exit(1)
+				}
+				skip_repeat = true
+			}
+			fallthrough
 		case 'd':
 			all_tasks := get_tasks(&manager)
 			skip_task_read = true
@@ -199,7 +213,7 @@ func main() {
 				}
 			}
 			// Log in the audit log
-			if !force_delete {
+			if !force_delete && !skip_repeat {
 				original_storage_directory := manager.storage_directory
 				if task_deleted.category != nil {
 					manager.storage_directory = path.Join(manager.storage_directory, *task_deleted.category)
@@ -208,6 +222,7 @@ func main() {
 				manager.storage_directory = original_storage_directory
 			}
 			force_delete = false
+			skip_repeat = false
 		case 'r':
 			days, err := strconv.ParseInt(opt.Value, 10, 32)
 			if err != nil {
