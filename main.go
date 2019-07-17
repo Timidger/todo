@@ -91,6 +91,10 @@ func main() {
 					relative_day = 6
 				case "Tomorrow":
 					relative_day = (cur_weekday + 1) % 7
+				case "Today":
+					// NOTE Not useless with the -A option
+					due_date = due_date
+					continue
 				case "Yesterday":
 					due_date = due_date.AddDate(0, 0, -1)
 					continue
@@ -276,7 +280,7 @@ func main() {
 			records := manager.AuditRecords()
 			for _, record := range records {
 				if time_set {
-					if record.DateCompleted.Before(due_date) {
+					if record.DateCompleted.Before(due_date.AddDate(0, 0, -1)) {
 						continue
 					}
 				}
