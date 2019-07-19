@@ -261,8 +261,6 @@ func main() {
 				LogError(err.Error())
 				os.Exit(1)
 			}
-			(fmt.Printf("Task \"%s\" delayed until %s\n",
-				task_deleted.Body_content, task_deleted.Due_date.Weekday()))
 		case 'S':
 			manager.storage_directory = opt.Value
 		case 'c':
