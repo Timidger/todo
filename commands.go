@@ -243,7 +243,11 @@ func (cmd_manager *CommandManager) delay_task(task_manager *TaskManager, index s
 		return errors.New(fmt.Sprintf("Bad index \"%s\"", index))
 	}
 
-	task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, 1)
+	if cmd_manager.time_set {
+		task_deleted.Due_date = cmd_manager.due_date
+	} else {
+		task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, 1)
+	}
 
 	err := task_manager.SaveTask(*task_deleted)
 	return err

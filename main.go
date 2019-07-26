@@ -20,6 +20,7 @@ const help_message = "Usage of todo:\n" +
 	"  -d <index>      Delete a task by index number. If preceded by -a based on full list, not just due now\n" +
 	"  -D <index>      Same as -d but it will not recreate a task that repeats\n" +
 	"  -x <index>      Delay a task by one day. It is suggested you don't do this too often\n" +
+	"                  You can also combine it with -t, I guess. Quitter\n" +
 	"  -s <index>      Skip a task, deleting it but not logging it. This is only valid for repeat tasks.\n" +
 	"                  Note that the task will be regenerated, if that's not what you want see -D\n" +
 	"  -t <date>       Delay the task until the date\n" +
