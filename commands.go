@@ -225,6 +225,7 @@ func (cmd_manager *CommandManager) set_delay(days int) error {
 
 // -x
 func (cmd_manager *CommandManager) delay_task(task_manager *TaskManager, index string) error {
+	cmd_manager.skip_task_creation_prompt = true
 	// Always do a re-read for delays. Makes them both more expensive and multiple delays work.
 	tasks = nil
 	all_tasks := get_tasks(task_manager)
