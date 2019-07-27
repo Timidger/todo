@@ -183,7 +183,6 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 		if err := task_manager.SaveTask(*task_deleted); err != nil {
 			return nil, err
 		}
-		return nil, nil
 	}
 
 	// Log in the audit log
