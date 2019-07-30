@@ -51,7 +51,11 @@ func (task Task) String() string {
 		if overdue_days <= 0 {
 			days_left = " (due today)"
 		} else {
-			days_left = fmt.Sprintf(" (%d days overdue)", overdue_days)
+			if overdue_days == 1 {
+				days_left = fmt.Sprintf(" (%d day overdue)", overdue_days)
+			} else {
+				days_left = fmt.Sprintf(" (%d days overdue)", overdue_days)
+			}
 		}
 	} else if task.Overdue_days > 0 {
 		final_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
