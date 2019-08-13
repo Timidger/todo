@@ -1,4 +1,4 @@
-package main
+package todo
 
 import (
 	"crypto/sha1"
@@ -79,12 +79,12 @@ func (tasks Tasks) GetByHash(hash string) *Task {
 }
 
 type TaskManager struct {
-	storage_directory string
+	StorageDirectory string
 }
 
 // Saves a new task to disk
 func (manager *TaskManager) SaveTask(task Task) error {
-	storage_dir := manager.storage_directory
+	storage_dir := manager.StorageDirectory
 	if task.category != nil && path.Base(storage_dir) != *task.category {
 		storage_dir = path.Join(storage_dir, *task.category)
 	}
@@ -152,8 +152,8 @@ func (manager *TaskManager) DeleteTask(tasks Tasks, task_index string) *Task {
 }
 
 func (manager *TaskManager) GetCategories() Categories {
-	create_dir(manager.storage_directory)
-	root := manager.storage_directory
+	create_dir(manager.StorageDirectory)
+	root := manager.StorageDirectory
 	var categories Categories
 	max_depth := strings.Count(root, "/") + 1
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -181,8 +181,8 @@ func (manager *TaskManager) GetCategories() Categories {
 }
 
 func (manager *TaskManager) get_tasks_helper() Tasks {
-	create_dir(manager.storage_directory)
-	root := manager.storage_directory
+	create_dir(manager.StorageDirectory)
+	root := manager.StorageDirectory
 	var tasks Tasks
 	max_depth := strings.Count(root, "/") + 1
 	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
@@ -225,9 +225,9 @@ func (manager *TaskManager) get_tasks_helper() Tasks {
 func (manager *TaskManager) GetTasks() Tasks {
 	tasks := manager.get_tasks_helper()
 	categories := manager.GetCategories()
-	original_directory := manager.storage_directory
+	original_directory := manager.StorageDirectory
 	for _, category := range categories {
-		manager.storage_directory = path.Join(original_directory, category.Name)
+		manager.StorageDirectory = path.Join(original_directory, category.Name)
 		category_name := category.Name
 		new_tasks := manager.get_tasks_helper()
 		for i, _ := range new_tasks {
@@ -235,7 +235,7 @@ func (manager *TaskManager) GetTasks() Tasks {
 		}
 		tasks = append(tasks, new_tasks...)
 	}
-	manager.storage_directory = original_directory
+	manager.StorageDirectory = original_directory
 	tasks = tasks.Condense()
 	sort.Sort(tasks)
 	return tasks
@@ -273,8 +273,8 @@ func (tasks_ Tasks) FilterTasksDueBeforeToday() []Task {
 }
 
 func (manager *TaskManager) AuditLog(task Task) {
-	create_dir(manager.storage_directory)
-	audit_log_path := path.Join(manager.storage_directory, AUDIT_LOG)
+	create_dir(manager.StorageDirectory)
+	audit_log_path := path.Join(manager.StorageDirectory, AUDIT_LOG)
 	var audit_log_file *os.File
 	if _, err := os.Stat(audit_log_path); os.IsNotExist(err) {
 		audit_log_file, err = os.OpenFile(audit_log_path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
@@ -307,13 +307,13 @@ func (manager *TaskManager) AuditLog(task Task) {
 }
 
 func (manager *TaskManager) AuditRecords() Records {
-	create_dir(manager.storage_directory)
+	create_dir(manager.StorageDirectory)
 	categories := manager.GetCategories()
 	var records Records
 
 	// Append nil category to get the root audit log
 	for _, category := range append(categories, Category{}) {
-		audit_log_path := path.Join(manager.storage_directory, category.Name, AUDIT_LOG)
+		audit_log_path := path.Join(manager.StorageDirectory, category.Name, AUDIT_LOG)
 		if _, err := os.Stat(audit_log_path); os.IsNotExist(err) {
 			continue
 		}

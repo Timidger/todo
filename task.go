@@ -1,4 +1,4 @@
-package main
+package todo
 
 import (
 	"fmt"
@@ -11,6 +11,15 @@ import (
 )
 
 const CONTENT_LENGTH int = 58
+
+const RECORD_TIME_FORMAT = "2006/01/02 MST 15:04:05"
+const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
+const RELATIVE_TIME_FORMAT = "Monday MST"
+
+/*
+ * XXX Yes these names are stupid but they are part of the JSON
+ * and thus can't change now
+ */
 
 type Task struct {
 	// The "body" content of the task.

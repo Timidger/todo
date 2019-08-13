@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"git.sr.ht/~sircmpwn/getopt"
+	"git.sr.ht/~timidger/todo"
 	"github.com/mattn/go-isatty"
 	"io/ioutil"
 	"os"
@@ -36,22 +37,18 @@ const help_message = "Usage of todo:\n" +
 	"  -A              Show audit logs. Can be controlled with -t and -c\n" +
 	"  -S <directory>  Specify a custom todo directory (default is ~/.todo). Primarily used for testing\n"
 
-const RECORD_TIME_FORMAT = "2006/01/02 MST 15:04:05"
-const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
-const RELATIVE_TIME_FORMAT = "Monday MST"
-
 func main() {
 	opts, others, err := getopt.Getopts(os.Args, "ALhalt:d:x:D:S:C:c:r:n:s:")
 	if err != nil {
 		fmt.Printf("%s", help_message)
 		return
 	}
-	var task_manager TaskManager
-	task_manager.storage_directory = path.Join(os.Getenv("HOME"), ".todo/")
+	var task_manager todo.TaskManager
+	task_manager.StorageDirectory = path.Join(os.Getenv("HOME"), ".todo/")
 
-	var cmd_manager CommandManager
-	cmd_manager.due_date = time.Now()
-	cmd_manager.listing = LISTING_DAY
+	var cmd_manager todo.CommandManager
+	cmd_manager.DueDate = time.Now()
+	cmd_manager.Listing = todo.LISTING_DAY
 
 	for _, opt := range opts {
 		switch opt.Option {
@@ -59,100 +56,100 @@ func main() {
 			fmt.Printf("%s", help_message)
 			return
 		case 't':
-			due_date, err := time.Parse(EXPLICIT_TIME_FORMAT, opt.Value+" EDT")
+			due_date, err := time.Parse(todo.EXPLICIT_TIME_FORMAT, opt.Value+" EDT")
 			if err == nil {
-				cmd_manager.set_due_date(due_date)
+				cmd_manager.SetDueDate(due_date)
 			} else {
-				err = cmd_manager.set_due_date_relative(opt.Value)
+				err = cmd_manager.SetDueDateRelative(opt.Value)
 				if err != nil {
-					LogError(err.Error())
+					todo.LogError(err.Error())
 					os.Exit(1)
 				}
 			}
 		case 'l':
-			tasks, err := cmd_manager.get_tasks(&task_manager)
+			tasks, err := cmd_manager.GetTasks(&task_manager)
 			if err != nil {
-				LogError(err.Error())
+				todo.LogError(err.Error())
 				os.Exit(1)
 			}
 
 			// TODO DisplayTasksLong?
-			DisplayTasks(tasks)
+			todo.DisplayTasks(tasks)
 		case 'a':
-			cmd_manager.use_all_tasks()
+			cmd_manager.UseAllTasks()
 		case 'D':
-			task_deleted, err := cmd_manager.delete_task(&task_manager, opt.Value, true)
+			task_deleted, err := cmd_manager.DeleteTask(&task_manager, opt.Value, true)
 			if err != nil {
-				LogError(err.Error())
+				todo.LogError(err.Error())
 				os.Exit(1)
 			}
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				fmt.Printf(task_deleted.Body_content)
 			} else {
-				LogSuccess(task_deleted.String())
+				todo.LogSuccess(task_deleted.String())
 			}
 		case 'd':
-			task_deleted, err := cmd_manager.delete_task(&task_manager, opt.Value, false)
+			task_deleted, err := cmd_manager.DeleteTask(&task_manager, opt.Value, false)
 			if err != nil {
-				LogError(err.Error())
+				todo.LogError(err.Error())
 				os.Exit(1)
 			}
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				fmt.Printf(task_deleted.Body_content)
 			} else {
-				LogSuccess(task_deleted.String())
+				todo.LogSuccess(task_deleted.String())
 			}
 		case 's':
-			cmd_manager.skip_task(&task_manager, opt.Value)
+			cmd_manager.SkipTask(&task_manager, opt.Value)
 		case 'r':
 			days, err := strconv.ParseInt(opt.Value, 10, 32)
 			if err != nil {
-				LogError(fmt.Sprintf("Bad delay time: %s", opt.Value))
+				todo.LogError(fmt.Sprintf("Bad delay time: %s", opt.Value))
 				os.Exit(1)
 			}
 
-			err = cmd_manager.set_repeat(int(days))
+			err = cmd_manager.SetRepeat(int(days))
 			if err != nil {
-				LogError(err.Error())
+				todo.LogError(err.Error())
 				os.Exit(1)
 			}
 		case 'x':
-			err := cmd_manager.delay_task(&task_manager, opt.Value)
+			err := cmd_manager.DelayTask(&task_manager, opt.Value)
 			if err != nil {
-				LogError(err.Error())
+				todo.LogError(err.Error())
 				os.Exit(1)
 			}
 		case 'S':
-			task_manager.storage_directory = opt.Value
+			task_manager.StorageDirectory = opt.Value
 		case 'c':
 			category := opt.Value
-			category_path := path.Join(task_manager.storage_directory, category)
+			category_path := path.Join(task_manager.StorageDirectory, category)
 			if _, err := os.Stat(category_path); os.IsNotExist(err) {
-				LogError(fmt.Sprintf("Category \"%s\" does not exist", category))
+				todo.LogError(fmt.Sprintf("Category \"%s\" does not exist", category))
 				os.Exit(1)
 			}
 			fallthrough
 		case 'C':
-			task_manager.storage_directory = path.Join(task_manager.storage_directory, opt.Value)
+			task_manager.StorageDirectory = path.Join(task_manager.StorageDirectory, opt.Value)
 		case 'L':
-			categories := cmd_manager.get_categories(&task_manager)
+			categories := cmd_manager.GetCategories(&task_manager)
 			for _, category := range categories {
 				fmt.Println(category)
 			}
 		case 'n':
 			days, err := strconv.ParseInt(opt.Value, 10, 32)
 			if err != nil {
-				LogError(fmt.Sprintf("Bad day delay \"%s\", need number", opt.Value))
+				todo.LogError(fmt.Sprintf("Bad day delay \"%s\", need number", opt.Value))
 				os.Exit(1)
 			}
 
-			err = cmd_manager.set_delay(int(days))
+			err = cmd_manager.SetDelay(int(days))
 			if err != nil {
-				LogError(err.Error())
+				todo.LogError(err.Error())
 				os.Exit(1)
 			}
 		case 'A':
-			records := cmd_manager.get_audit_log(&task_manager)
+			records := cmd_manager.GetAuditLog(&task_manager)
 			for _, record := range records {
 				fmt.Println(record.String())
 			}
@@ -162,21 +159,21 @@ func main() {
 
 	// if skip_task_read is set then we have done an action that means we should
 	// not print this to stdout due to the chaining rule described above.
-	tasks_all := cmd_manager.get_tasks_if_all(&task_manager)
-	DisplayTasksLong(tasks_all)
+	tasks_all := cmd_manager.GetTasksIfAll(&task_manager)
+	todo.DisplayTasksLong(tasks_all)
 
-	if len(opts) > 0 && cmd_manager.skip_task_creation_prompt {
+	if len(opts) > 0 && cmd_manager.SkipTaskCreationPrompt {
 		return
 	}
 
 	if input := strings.Join(os.Args[others:], " "); len(os.Args) > 1 && input != "" {
-		err = cmd_manager.create_task(&task_manager, input)
+		err = cmd_manager.CreateTask(&task_manager, input)
 	} else {
 		reader := bufio.NewReader(os.Stdin)
-		err = cmd_manager.create_task(&task_manager, readInTask(reader))
+		err = cmd_manager.CreateTask(&task_manager, readInTask(reader))
 	}
 	if err != nil {
-		LogError(err.Error())
+		todo.LogError(err.Error())
 		os.Exit(1)
 	}
 }
