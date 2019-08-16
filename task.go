@@ -47,6 +47,13 @@ func min(a, b int) int {
 	return b
 }
 
+func (task Task) Category() string {
+	if task.category != nil {
+		return *task.category
+	}
+	return ""
+}
+
 func (task Task) String() string {
 	category_name := ""
 	if task.category != nil {

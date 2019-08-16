@@ -1,0 +1,88 @@
+body {
+  background-color: #000;
+  color: #fff;
+  font-size: 32px;
+}
+
+.main-container {
+    max-width: 90%;
+    margin: 0 auto;
+    display: grid;
+}
+
+.collapsible {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.collapsible .secret-checkbox {
+  position: absolute;
+  left: -9999px;
+}
+
+.collapsible input:focus ~ .collapser {
+  border-color: grey;
+}
+
+.collapsible .collapser {
+  cursor: pointer;
+  border: 1px transparent dotted;
+}
+
+.button-div {
+    ext-align: center;
+}
+
+.collapsible .arrow {
+  float: right;
+  margin-left: 0.5em;
+  display: inline-block;
+  transform: rotate(180deg);
+  transition: transform 0.10s ease-out;
+}
+
+.collapsible input:checked ~ .arrow,
+.collapsible input:checked ~ .collapser .arrow {
+  transform: rotate(90deg);
+}
+
+.collapsible .collapsed {
+  font-size: 0;
+  margin: 0;
+  opacity: 0;
+  padding: 0;
+  height: 0;
+  /* fade out, then shrink */
+  transition: opacity 0.10s, margin 0.5s 0.10s, font-size 0.5s 0.10s, padding 0.5s 0.10s;
+}
+
+.collapsible input:checked ~ .collapsed {
+  font-size: 24px;
+  opacity: 1;
+  height: auto;
+  padding: 5px 0;
+  /* grow, then fade in */
+  transition: margin 0.10s, padding 0.10s, font-size 0.10s, opacity 0.5s 0.10s;
+}
+
+.task-selector {
+    transform: scale(2);
+}
+
+.task {
+    margin: 2rem 0;
+}
+
+.delete-selected-button, .add-task-button {
+    display: inline-block;
+    width: auto;
+    cursor: pointer;
+    text-align: center;
+    border: none;
+    padding: 15px 25px;
+    margin: 0 0 2rem 0;
+    font-size: 24px;
+}
+.delete-selected-button:hover, .add-task-button:hover {
+    background-color: grey;
+}

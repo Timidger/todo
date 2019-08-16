@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Todo</title>
+        <meta name="viewport"  content="width=device-width, user-scalable=no">
+        <link rel="stylesheet" type="text/css" href="static/mockup.css">
+    </head>
+    <body>
+        <div class="main-container">
+            <form method="post">
+                <div>
+                    <label for="category">Category:</label>
+                    <input name="category" id="category">
+                </div>
+                <div>
+                    <label for="task_body" >Content:</label>
+                    <input name="task_body" id="task_body">
+                </div>
+                <button class="add-task-button" type="submit" formmethod="post">
+                    Add Task
+            </form>
+            </button>
+            <button class="delete-selected-button" type="submit" formmethod="post">
+                Delete selected
+            </button>
+            {{range .Categories}}
+            {{if (ne .Tasks 0)}}
+            <label class="collapsible">
+                <input class="secret-checkbox" type="checkbox"/>
+                <span class="arrow">&gt;</span>
+                <span class="collapser">{{.Name}}</span>
+                <div class="collapsed">
+                    {{$cur_category := .Name}}
+                    {{range $.Tasks}}
+                    {{if (eq .Category $cur_category)}}
+                    <div class="task">
+                        <input class="task-selector" type="checkbox"/>
+                        {{.Body_content}}
+                    </div>
+                    {{end}}
+                    {{end}}
+                </div>
+            </label>
+            {{end}}
+            {{end}}
+        </div>
+    </body>
+</html>
