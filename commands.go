@@ -90,17 +90,13 @@ func (cmd_manager *CommandManager) GetTasks(task_manager *TaskManager) (Tasks, e
 	cmd_manager.Listing = LISTING_DAY
 	cmd_manager.SkipTaskCreationPrompt = true
 
-	// TODO What about the "is_today"? We only know that here,
-	// so we need to change how we return the tasks...
-	//is_today := true
 	var tasks Tasks
-	if cmd_manager.DueDate.Before(time.Now()) {
+	if cmd_manager.DueDate.Before(time.Now()) && !cmd_manager.TimeSet {
 		tasks = all_tasks.FilterTasksDueBeforeToday()
 		if len(tasks) == 0 {
 			tasks = *all_tasks
 		}
 	} else {
-		// is_today = false
 		tasks = all_tasks.FilterTasksDueOnDay(cmd_manager.DueDate)
 	}
 
