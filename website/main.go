@@ -15,6 +15,7 @@ import (
 
 const HELP_MESSAGE = "Usage of website:\n" +
 	"  -p              Set the port number\n"
+const WEBPAGE = "todo.html"
 
 var TASK_MANAGER todo.TaskManager
 var CMD_MANAGER todo.CommandManager
@@ -77,7 +78,7 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		fallthrough
 	case "GET":
-		templ := template.New("mockup.html")
+		templ := template.New(WEBPAGE)
 		templ = templ.Funcs(template.FuncMap{
 			"Deref": func(s *string) string {
 				if s != nil {
@@ -86,7 +87,7 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 				return ""
 			}})
 
-		templ, err := templ.ParseFiles("mockup.html")
+		templ, err := templ.ParseFiles(WEBPAGE)
 		if err != nil {
 			panic(err)
 		}
