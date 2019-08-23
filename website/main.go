@@ -64,6 +64,18 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	switch req.Method {
+	case "DELETE":
+		if err := req.ParseForm(); err != nil {
+			fmt.Fprintf(w, "%v", err)
+			return
+		}
+		category := req.FormValue("category")
+		task_id := req.FormValue("task_id")
+		err := delete_task(category, task_id)
+		if err != nil {
+			fmt.Fprintf(w, "%v\n", err)
+		}
+		// TODO Refresh page
 	case "POST":
 		if err := req.ParseForm(); err != nil {
 			fmt.Fprintf(w, "%v", err)
@@ -73,7 +85,7 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 		task_body := req.FormValue("task_body")
 		err := create_task(category, task_body)
 		if err != nil {
-			w.Write(([]byte)(fmt.Sprintf("%v\n", err)))
+			fmt.Fprintf(w, "%v\n", err)
 			return
 		}
 		fallthrough
@@ -104,6 +116,29 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 
 func create_task(category, task_body string) error {
 	original := TASK_MANAGER.StorageDirectory
+	defer reset_category(original)
+	set_category(category)
+
+	err := CMD_MANAGER.CreateTask(&TASK_MANAGER, task_body)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func delete_task(category, task_id string) error {
+	original := TASK_MANAGER.StorageDirectory
+	defer reset_category(original)
+	set_category(category)
+
+	_, err := CMD_MANAGER.DeleteTask(&TASK_MANAGER, task_id, true)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func set_category(category string) error {
 	if category != "" {
 		category_path := path.Join(TASK_MANAGER.StorageDirectory, category)
 		if _, err := os.Stat(category_path); os.IsNotExist(err) {
@@ -115,10 +150,9 @@ func create_task(category, task_body string) error {
 			TASK_MANAGER.StorageDirectory,
 			category)
 	}
-	err := CMD_MANAGER.CreateTask(&TASK_MANAGER, task_body)
-	TASK_MANAGER.StorageDirectory = original
-	if err != nil {
-		return err
-	}
 	return nil
+}
+
+func reset_category(original string) {
+	TASK_MANAGER.StorageDirectory = original
 }
