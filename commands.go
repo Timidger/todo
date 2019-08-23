@@ -289,6 +289,10 @@ func (cmd_manager *CommandManager) GetTasksIfAll(task_manager *TaskManager) Task
 }
 
 func (cmd_manager *CommandManager) CreateTask(task_manager *TaskManager, input string) error {
-	return task_manager.SaveTask(NewTask(input, cmd_manager.DueDate,
-		cmd_manager.Repeat, cmd_manager.OverdueDays))
+	task, err := NewTask(input, cmd_manager.DueDate,
+		cmd_manager.Repeat, cmd_manager.OverdueDays)
+	if err != nil {
+		return err
+	}
+	return task_manager.SaveTask(task)
 }

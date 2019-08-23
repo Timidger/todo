@@ -1,9 +1,9 @@
 package todo
 
 import (
+	"errors"
 	"fmt"
 	"math"
-	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -107,21 +107,22 @@ func (task Task) String() string {
 }
 
 /// Creates a new task, without saving it.
-func NewTask(text string, due_date time.Time, repeat *time.Duration, overdue_days int) Task {
+func NewTask(text string, due_date time.Time, repeat *time.Duration, overdue_days int) (Task, error) {
 	if !utf8.ValidString(text) {
 		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
 	}
 	text = strings.TrimSuffix(text, "\n")
 	if text == "" {
-		LogError("Cannot make a task with an empty string")
-		os.Exit(1)
+		msg := "Cannot make a task with an empty string"
+		LogError(msg)
+		return Task{}, errors.New(msg)
 	}
 	var task Task
 	task.Body_content = text
 	task.Due_date = due_date
 	task.Repeat = repeat
 	task.Overdue_days = overdue_days
-	return task
+	return task, nil
 }
 
 // Format just the task body
