@@ -75,12 +75,12 @@ body {
 
 .delete-selected-button, .add-task-button {
     display: inline-block;
-    width: auto;
+    width: 100%;
     cursor: pointer;
     text-align: center;
     border: none;
     padding: 15px 25px;
-    margin: 0 0 2rem 0;
+    margin: 2rem 0 2rem 0;
     font-size: 24px;
 }
 .delete-selected-button:hover, .add-task-button:hover {
