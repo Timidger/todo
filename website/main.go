@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"git.sr.ht/~sircmpwn/getopt"
 	"git.sr.ht/~timidger/todo"
@@ -69,8 +70,11 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		category := req.FormValue("category")
 		task_body := req.FormValue("task_body")
-		// TODO Actually create the task
-		fmt.Printf("TODO: %v for %v\n", task_body, category)
+		err := create_task(category, task_body)
+		if err != nil {
+			w.Write(([]byte)(fmt.Sprintf("%v\n", err)))
+			return
+		}
 		fallthrough
 	case "GET":
 		templ := template.New("mockup.html")
@@ -95,4 +99,25 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 			panic(err)
 		}
 	}
+}
+
+func create_task(category, task_body string) error {
+	original := TASK_MANAGER.StorageDirectory
+	if category != "" {
+		category_path := path.Join(TASK_MANAGER.StorageDirectory, category)
+		if _, err := os.Stat(category_path); os.IsNotExist(err) {
+			msg := fmt.Sprintf("Category \"%s\" does not exist", category)
+			todo.LogError(msg)
+			return errors.New(msg)
+		}
+		TASK_MANAGER.StorageDirectory = path.Join(
+			TASK_MANAGER.StorageDirectory,
+			category)
+	}
+	err := CMD_MANAGER.CreateTask(&TASK_MANAGER, task_body)
+	TASK_MANAGER.StorageDirectory = original
+	if err != nil {
+		return err
+	}
+	return nil
 }
