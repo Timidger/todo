@@ -166,9 +166,19 @@ func (manager *TaskManager) GetCategories() Categories {
 			if err != nil {
 				return err
 			}
+			has_audit := false
+			for _, file := range sub_dir_files {
+				name := file.Name()
+				if name == "audit_log" {
+					has_audit = true
+				}
+			}
 			var category Category
 			category.Name = info.Name()
 			category.Tasks = len(sub_dir_files)
+			if has_audit {
+				category.Tasks -= 1
+			}
 			categories = append(categories, category)
 		}
 		return nil
