@@ -166,19 +166,28 @@ func (manager *TaskManager) GetCategories() Categories {
 			if err != nil {
 				return err
 			}
-			has_audit := false
+			count := 0
 			for _, file := range sub_dir_files {
+				var task Task
 				name := file.Name()
 				if name == "audit_log" {
-					has_audit = true
+					continue
+				}
+				bytes, err := ioutil.ReadFile(strings.Join([]string{path, name}, "/"))
+				if err != nil {
+					continue
+				}
+				err = json.Unmarshal(bytes, &task)
+				if err != nil {
+					continue
+				}
+				if task.DueToday() {
+					count += 1
 				}
 			}
 			var category Category
 			category.Name = info.Name()
-			category.Tasks = len(sub_dir_files)
-			if has_audit {
-				category.Tasks -= 1
-			}
+			category.Tasks = count
 			categories = append(categories, category)
 		}
 		return nil
