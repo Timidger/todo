@@ -20,9 +20,6 @@
                     Add Task
             </form>
             </button>
-            <button class="delete-selected-button" type="submit" formmethod="post">
-                Delete selected
-            </button>
             {{range .Categories}}
             {{if (ne .Tasks 0)}}
             <label class="collapsible">
@@ -42,6 +39,23 @@
                 </div>
             </label>
             {{end}}
+            {{end}}
+            {{if (ne (len .Tasks) 0)}}
+            <label class="collapsible">
+                <input class="secret-checkbox" type="checkbox"/>
+                <span class="arrow">&gt;</span>
+                <span class="collapser">Misc.</span>
+                <div class="collapsed">
+                    {{range .Tasks}}
+                    {{if (eq .Category "")}}
+                    <div class="task">
+                        <input class="task-selector" type="checkbox"/>
+                        {{.Body_content}}
+                    </div>
+                    {{end}}
+                    {{end}}
+                </div>
+            </label>
             {{end}}
         </div>
     </body>
