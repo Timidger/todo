@@ -104,9 +104,13 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 			panic(err)
 		}
 
+		tasks, err := CMD_MANAGER.GetTasks(&TASK_MANAGER)
+		if err != nil {
+			panic(err)
+		}
 		result := Result{
 			Categories: TASK_MANAGER.GetCategories(),
-			Tasks:      TASK_MANAGER.GetTasks()}
+			Tasks:      tasks}
 		err = templ.Execute(w, result)
 		if err != nil {
 			panic(err)
