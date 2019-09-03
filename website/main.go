@@ -17,9 +17,6 @@ const HELP_MESSAGE = "Usage of website:\n" +
 	"  -p              Set the port number\n"
 const WEBPAGE = "todo.html"
 
-var TASK_MANAGER todo.TaskManager
-var CMD_MANAGER todo.CommandManager
-
 func main() {
 	opts, _, err := getopt.Getopts(os.Args, "p:")
 	if err != nil {
@@ -40,10 +37,6 @@ func main() {
 		}
 	}
 
-	TASK_MANAGER.StorageDirectory = path.Join(os.Getenv("HOME"), ".todo/")
-	CMD_MANAGER.DueDate = time.Now()
-	CMD_MANAGER.Listing = todo.LISTING_DAY
-
 	http.Handle("/static/", http.StripPrefix("/static/", http.FileServer(http.Dir("static"))))
 	http.HandleFunc("/", rootHandler)
 
@@ -57,6 +50,13 @@ type Result struct {
 }
 
 func rootHandler(w http.ResponseWriter, req *http.Request) {
+	var task_manager todo.TaskManager
+	var cmd_manager todo.CommandManager
+
+	task_manager.StorageDirectory = path.Join(os.Getenv("HOME"), ".todo/")
+	cmd_manager.DueDate = time.Now()
+	cmd_manager.Listing = todo.LISTING_DAY
+
 	// The "/" pattern matches everything, so we need to check
 	// that we're at the root here.
 	if req.URL.Path != "/" {
@@ -71,7 +71,7 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		category := req.FormValue("category")
 		task_id := req.FormValue("task_id")
-		err := delete_task(category, task_id)
+		err := delete_task(&task_manager, &cmd_manager, category, task_id)
 		if err != nil {
 			fmt.Fprintf(w, "%v\n", err)
 		}
@@ -83,7 +83,7 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 		}
 		category := req.FormValue("category")
 		task_body := req.FormValue("task_body")
-		err := create_task(category, task_body)
+		err := create_task(&task_manager, &cmd_manager, category, task_body)
 		if err != nil {
 			fmt.Fprintf(w, "%v\n", err)
 			return
@@ -104,12 +104,12 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 			panic(err)
 		}
 
-		tasks, err := CMD_MANAGER.GetTasks(&TASK_MANAGER)
+		tasks, err := cmd_manager.GetTasks(&task_manager)
 		if err != nil {
 			panic(err)
 		}
 		result := Result{
-			Categories: TASK_MANAGER.GetCategories(),
+			Categories: task_manager.GetCategories(),
 			Tasks:      tasks}
 		err = templ.Execute(w, result)
 		if err != nil {
@@ -118,45 +118,49 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func create_task(category, task_body string) error {
-	original := TASK_MANAGER.StorageDirectory
-	defer reset_category(original)
-	set_category(category)
+func create_task(task_manager *todo.TaskManager, cmd_manager *todo.CommandManager,
+	category, task_body string) error {
 
-	err := CMD_MANAGER.CreateTask(&TASK_MANAGER, task_body)
+	original := task_manager.StorageDirectory
+	defer reset_category(task_manager, original)
+	set_category(task_manager, category)
+
+	err := cmd_manager.CreateTask(task_manager, task_body)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func delete_task(category, task_id string) error {
-	original := TASK_MANAGER.StorageDirectory
-	defer reset_category(original)
-	set_category(category)
+func delete_task(task_manager *todo.TaskManager, cmd_manager *todo.CommandManager,
+	category, task_id string) error {
 
-	_, err := CMD_MANAGER.DeleteTask(&TASK_MANAGER, task_id, true)
+	original := task_manager.StorageDirectory
+	defer reset_category(task_manager, original)
+	set_category(task_manager, category)
+
+	_, err := cmd_manager.DeleteTask(task_manager, task_id, true)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func set_category(category string) error {
+func set_category(task_manager *todo.TaskManager, category string) error {
 	if category != "" {
-		category_path := path.Join(TASK_MANAGER.StorageDirectory, category)
+		category_path := path.Join(task_manager.StorageDirectory, category)
 		if _, err := os.Stat(category_path); os.IsNotExist(err) {
 			msg := fmt.Sprintf("Category \"%s\" does not exist", category)
 			todo.LogError(msg)
 			return errors.New(msg)
 		}
-		TASK_MANAGER.StorageDirectory = path.Join(
-			TASK_MANAGER.StorageDirectory,
+		task_manager.StorageDirectory = path.Join(
+			task_manager.StorageDirectory,
 			category)
 	}
 	return nil
 }
 
-func reset_category(original string) {
-	TASK_MANAGER.StorageDirectory = original
+func reset_category(task_manager *todo.TaskManager, original string) {
+	task_manager.StorageDirectory = original
 }
