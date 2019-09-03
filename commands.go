@@ -24,6 +24,10 @@ func GetTasks(manager *TaskManager) *Tasks {
 	return tasks
 }
 
+func ClearCache() {
+	tasks = nil
+}
+
 // Manages the state between commands
 type CommandManager struct {
 	// See LISTING enum

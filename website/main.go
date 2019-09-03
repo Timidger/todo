@@ -50,6 +50,7 @@ type Result struct {
 }
 
 func rootHandler(w http.ResponseWriter, req *http.Request) {
+	todo.ClearCache()
 	var task_manager todo.TaskManager
 	var cmd_manager todo.CommandManager
 
