@@ -291,7 +291,7 @@ func (tasks_ Tasks) FilterTasksDueBeforeToday() []Task {
 	return tasks
 }
 
-func (manager *TaskManager) AuditLog(task Task) {
+func (manager *TaskManager) AuditLog(task Task, done_date time.Time) {
 	create_dir(manager.StorageDirectory)
 	audit_log_path := path.Join(manager.StorageDirectory, AUDIT_LOG)
 	var audit_log_file *os.File
@@ -317,7 +317,7 @@ func (manager *TaskManager) AuditLog(task Task) {
 	record.Due_date = task.Due_date
 	record.Repeat = task.Repeat
 	record.Overdue_days = task.Overdue_days
-	record.DateCompleted = time.Now()
+	record.DateCompleted = done_date
 
 	if err := audit_log.Write(record.Marshal()); err != nil {
 		panic(err)

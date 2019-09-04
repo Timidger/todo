@@ -191,7 +191,7 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 		if task_deleted.category != nil {
 			task_manager.StorageDirectory = path.Join(task_manager.StorageDirectory, *task_deleted.category)
 		}
-		task_manager.AuditLog(*task_deleted)
+		task_manager.AuditLog(*task_deleted, cmd_manager.DueDate)
 		task_manager.StorageDirectory = original_StorageDirectory
 	}
 
