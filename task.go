@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"strconv"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -64,7 +63,7 @@ func (task Task) String() string {
 	if task.DueBefore(due_date) {
 		passed_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
 		overdue_days := int(math.Floor(time.Now().Sub(passed_due_date).Hours() / 24))
-		if overdue_days <= 0 {
+		if task.DueAfter(time.Now().Truncate(24*time.Hour)) || overdue_days == 0 {
 			days_left = " (due today)"
 		} else {
 			if overdue_days == 1 {
@@ -152,20 +151,7 @@ func (task *Task) DueToday() bool {
 
 /// Determines if a task is due before today.
 func (task *Task) DueBefore(date time.Time) bool {
-	day := string(strconv.Itoa(date.Day()))
-	month := string(strconv.Itoa(int(date.Month())))
-	if date.Day() < 10 {
-		day = "0" + day
-	}
-	if date.Month() < 10 {
-		month = "0" + month
-	}
-	today, err := time.Parse(EXPLICIT_TIME_FORMAT,
-		fmt.Sprintf("%v/%v/%v EDT", date.Year(), month, day))
-	if err != nil {
-		panic(err)
-	}
-	return task.Due_date.Before(today)
+	return task.Due_date.Before(date.Truncate(24 * time.Hour))
 }
 
 func (task *Task) DueAfter(after time.Time) bool {
