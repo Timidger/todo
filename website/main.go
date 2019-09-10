@@ -76,8 +76,10 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 		err := delete_task(&task_manager, &cmd_manager, category, task_id)
 		if err != nil {
 			fmt.Fprintf(w, "%v\n", err)
+			return
 		}
-		// TODO Refresh page
+		// XXX Yes we are assuming we are at /todo here, which is handled by nginx
+		http.Redirect(w, req, "/todo", http.StatusSeeOther)
 	case "POST":
 		if err := req.ParseForm(); err != nil {
 			fmt.Fprintf(w, "%v", err)
