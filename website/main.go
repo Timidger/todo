@@ -89,7 +89,8 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Fprintf(w, "%v\n", err)
 			return
 		}
-		fallthrough
+		// XXX Yes we are assuming we are at /todo here, which is handled by nginx
+		http.Redirect(w, req, "/todo", http.StatusSeeOther)
 	case "GET":
 		templ := template.New(WEBPAGE)
 		templ = templ.Funcs(template.FuncMap{
