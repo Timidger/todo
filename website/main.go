@@ -10,6 +10,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"time"
 )
 
@@ -82,8 +83,8 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 			fmt.Fprintf(w, "%v", err)
 			return
 		}
-		category := req.FormValue("category")
-		task_body := req.FormValue("task_body")
+		category := strings.TrimSpace(req.FormValue("category"))
+		task_body := strings.TrimSpace(req.FormValue("task_body"))
 		err := create_task(&task_manager, &cmd_manager, category, task_body)
 		if err != nil {
 			fmt.Fprintf(w, "%v\n", err)
