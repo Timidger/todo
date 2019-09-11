@@ -3,6 +3,7 @@ package todo
 import (
 	"errors"
 	"fmt"
+	"os/exec"
 	"path"
 	"strings"
 	"time"
@@ -78,7 +79,19 @@ func (cmd_manager *CommandManager) SetDueDateRelative(new_due_date string) error
 		cmd_manager.DueDate = today.AddDate(0, 0, -1)
 		return nil
 	default:
-		return errors.New(fmt.Sprintf("Bad date: %s", new_due_date))
+		// Attempt to use date as a fallback, using ISO-8601 format
+		var due_date time.Time
+		out, err := exec.Command("/usr/bin/date", "--iso-8601", "-d", new_due_date).Output()
+		if err != nil {
+			return errors.New(fmt.Sprintf("/usr/bin/date failed: %v", err))
+		}
+		new_due_date = strings.ReplaceAll(strings.TrimSpace(string(out)), "-", "/")
+		due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, new_due_date+" EDT")
+		if err != nil {
+			return errors.New(fmt.Sprintf("Bad date: %s", new_due_date))
+		}
+		cmd_manager.DueDate = due_date
+		return nil
 	}
 	if cur_weekday < relative_day {
 		cmd_manager.DueDate = today.AddDate(0, 0, int(relative_day-cur_weekday))
