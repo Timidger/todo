@@ -63,14 +63,14 @@ func (task Task) String() string {
 	if task.DueBefore(due_date) {
 		passed_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
 		overdue_days := int(math.Floor(time.Now().Sub(passed_due_date).Hours() / 24))
-		if task.DueAfter(time.Now().Truncate(24*time.Hour)) || overdue_days <= 0 {
-			days_left = " (due today)"
-		} else {
-			if overdue_days == 1 {
-				days_left = fmt.Sprintf(" (%d day overdue)", overdue_days)
+		if task.DueBefore(time.Now().Truncate(24*time.Hour)) && overdue_days >= 0 {
+			if overdue_days == 1 || overdue_days == 0 {
+				days_left = fmt.Sprintf(" (%d day overdue)", 1)
 			} else {
 				days_left = fmt.Sprintf(" (%d days overdue)", overdue_days)
 			}
+		} else {
+			days_left = " (due today)"
 		}
 	} else if task.Overdue_days > 0 {
 		final_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
