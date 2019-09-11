@@ -13,8 +13,7 @@
              }
              for (task of tasks) {
                  let request = new XMLHttpRequest();
-                 // XXX This is assuming we are behind a proxy, at /todo
-                 request.open('DELETE', '/todo' + task, true);
+                 request.open('DELETE', window.location.href + task, true);
                  request.onload = function() {
                      if (request.responseText !== "") {
                          console.error(request.responseText)
