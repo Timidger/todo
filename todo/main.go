@@ -18,7 +18,8 @@ const help_message = "Usage of todo:\n" +
 	"  -h              Show this help message\n" +
 	"  -l              List the things to do today by category first and due date\n" +
 	"  -a              List all the things to do, regardless of due date, from soonest to latest\n" +
-	"  -d <index>      Delete a task by index number. If preceded by -a based on full list, not just due now\n" +
+	"  -d <index>      Delete a task by index number. If preceded by -a based on full list, not just due now.\n" +
+	"                  \"this\" is a special case that will delete a task you create in the same command invocation.\n" +
 	"  -D <index>      Same as -d but it will not recreate a task that repeats\n" +
 	"  -x <index>      Delay a task by one day. It is suggested you don't do this too often\n" +
 	"                  You can also combine it with -t, I guess. Quitter\n" +
@@ -49,6 +50,8 @@ func main() {
 	var cmd_manager todo.CommandManager
 	cmd_manager.DueDate = time.Now()
 	cmd_manager.Listing = todo.LISTING_DAY
+
+	instant_delete := false
 
 	for _, opt := range opts {
 		switch opt.Option {
@@ -89,6 +92,10 @@ func main() {
 				todo.LogSuccess(task_deleted.String())
 			}
 		case 'd':
+			if opt.Value == "this" {
+				instant_delete = true
+				continue
+			}
 			task_deleted, err := cmd_manager.DeleteTask(&task_manager, opt.Value, false)
 			if err != nil {
 				todo.LogError(err.Error())
@@ -166,15 +173,26 @@ func main() {
 		return
 	}
 
+	var task *todo.Task
 	if input := strings.Join(os.Args[others:], " "); len(os.Args) > 1 && input != "" {
-		err = cmd_manager.CreateTask(&task_manager, input)
+		task, err = cmd_manager.CreateTask(&task_manager, input)
 	} else {
 		reader := bufio.NewReader(os.Stdin)
-		err = cmd_manager.CreateTask(&task_manager, readInTask(reader))
+		task, err = cmd_manager.CreateTask(&task_manager, readInTask(reader))
 	}
 	if err != nil {
 		todo.LogError(err.Error())
 		os.Exit(1)
+	}
+
+	if instant_delete {
+		todo.ClearCache()
+		task_deleted, err := cmd_manager.DeleteTask(&task_manager, task.GetFullIndex(), false)
+		if err != nil {
+			todo.LogError(err.Error())
+			os.Exit(1)
+		}
+		todo.LogSuccess(task_deleted.String())
 	}
 }
 

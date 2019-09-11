@@ -180,7 +180,7 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 	if !force_delete && task_deleted.Repeat != nil {
 		// Recreate the task if it has a repeat.
 		task_deleted.Due_date = task_deleted.Due_date.Add(*task_deleted.Repeat)
-		if err := task_manager.SaveTask(*task_deleted); err != nil {
+		if err := task_manager.SaveTask(task_deleted); err != nil {
 			return nil, err
 		}
 	}
@@ -248,7 +248,7 @@ func (cmd_manager *CommandManager) DelayTask(task_manager *TaskManager, index st
 		task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, 1)
 	}
 
-	err := task_manager.SaveTask(*task_deleted)
+	err := task_manager.SaveTask(task_deleted)
 	return err
 }
 
@@ -292,11 +292,17 @@ func (cmd_manager *CommandManager) GetTasksIfAll(task_manager *TaskManager) Task
 	return Tasks{}
 }
 
-func (cmd_manager *CommandManager) CreateTask(task_manager *TaskManager, input string) error {
+func (cmd_manager *CommandManager) CreateTask(task_manager *TaskManager,
+	input string) (*Task, error) {
 	task, err := NewTask(input, cmd_manager.DueDate,
 		cmd_manager.Repeat, cmd_manager.OverdueDays)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return task_manager.SaveTask(task)
+
+	err = task_manager.SaveTask(&task)
+	if err != nil {
+		return nil, err
+	}
+	return &task, nil
 }

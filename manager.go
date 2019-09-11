@@ -83,7 +83,7 @@ type TaskManager struct {
 }
 
 // Saves a new task to disk
-func (manager *TaskManager) SaveTask(task Task) error {
+func (manager *TaskManager) SaveTask(task *Task) error {
 	storage_dir := manager.StorageDirectory
 	if task.category != nil && path.Base(storage_dir) != *task.category {
 		storage_dir = path.Join(storage_dir, *task.category)
@@ -94,7 +94,9 @@ func (manager *TaskManager) SaveTask(task Task) error {
 	// Also use the storage directory name as part of the hash,
 	// this is to avoid collisions across categories.
 	sha.Write([]byte(path.Base(storage_dir)))
-	save_path := path.Join(storage_dir, fmt.Sprintf("%x", sha.Sum(nil))+".todo")
+	hash := fmt.Sprintf("%x", sha.Sum(nil))
+	task.full_index = hash
+	save_path := path.Join(storage_dir, hash+".todo")
 	if _, err := os.Stat(save_path); !os.IsNotExist(err) {
 		return errors.New("You have already made that a task")
 	}
@@ -129,7 +131,7 @@ func (manager *TaskManager) DeleteTask(tasks Tasks, task_index string) *Task {
 	// the full length.
 	if to_delete_index == -1 {
 		for i, task := range tasks {
-			if task_index == task.full_index[0:len(task_index)] {
+			if strings.HasPrefix(task.full_index, task_index) {
 				if to_delete_index != -1 {
 					return nil
 				}
