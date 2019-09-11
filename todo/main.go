@@ -76,7 +76,6 @@ func main() {
 				os.Exit(1)
 			}
 
-			// TODO DisplayTasksLong?
 			todo.DisplayTasks(tasks)
 		case 'a':
 			cmd_manager.UseAllTasks()
