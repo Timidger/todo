@@ -4,6 +4,43 @@
         <title>Todo</title>
         <meta name="viewport"  content="width=device-width, user-scalable=no">
         <link rel="stylesheet" type="text/css" href="static/todo.css">
+        <script>
+         var tasks = []
+         function delete_tasks() {
+             console.log("delete tasks")
+             if (tasks.length === 0) {
+                 return;
+             }
+             for (task of tasks) {
+                 let request = new XMLHttpRequest();
+                 request.open('DELETE', '/' + task, true);
+                 request.onload = function() {
+                     if (request.responseText !== "") {
+                         console.error(request.responseText)
+                     }
+                 };
+                 request.send(null)
+             }
+             tasks = []
+             window.location.reload(/*skip_cache=*/true)
+         };
+         function handle_checkbox(checkbox, task) {
+             if (checkbox.checked) {
+                 add_task(task)
+             } else {
+                 remove_task(task)
+             }
+         }
+         function add_task(task) {
+             tasks.push(task)
+         }
+         function remove_task(task) {
+             const index = tasks.indexOf(task)
+             if (index > -1) {
+                 tasks.splice(index, 1)
+             }
+         }
+        </script>
     </head>
     <body>
         <div class="main-container">
@@ -16,9 +53,19 @@
                     <label for="task_body" >Content:</label>
                     <input name="task_body" id="task_body">
                 </div>
-                <button class="add-task-button" type="submit" formmethod="post">
-                    Add Task
-                </button>
+                <div class="buttons">
+                    <button class="add-task-button"
+                            type="submit"
+                            formmethod="post">
+                        Add Task
+                    </button>
+                    <button class="delete-selected-button"
+                            onclick="delete_tasks()"
+                            type="reset"
+                            formmethod="delete">
+                        Delete Tasks
+                    </button>
+                </div>
             </form>
             {{range .Categories}}
             {{if (ne .Tasks 0)}}
@@ -31,7 +78,9 @@
                     {{range $.Tasks}}
                     {{if (eq .Category $cur_category)}}
                     <div class="task">
-                        <input class="task-selector" type="checkbox"/>
+                        <input class="task-selector"
+                               type="checkbox"
+                               onclick="handle_checkbox(this, {{.GetFullIndex}})"/>
                         {{.Body_content}}
                     </div>
                     {{end}}
@@ -49,7 +98,9 @@
                     {{range .Tasks}}
                     {{if (eq .Category "")}}
                     <div class="task">
-                        <input class="task-selector" type="checkbox"/>
+                        <input class="task-selector"
+                               type="checkbox"
+                               onclick="handle_checkbox(this, {{.GetFullIndex}})"/>
                         {{.Body_content}}
                     </div>
                     {{end}}

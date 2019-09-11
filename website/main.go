@@ -61,25 +61,18 @@ func rootHandler(w http.ResponseWriter, req *http.Request) {
 
 	// The "/" pattern matches everything, so we need to check
 	// that we're at the root here.
-	if req.URL.Path != "/" {
+	if req.URL.Path != "/" && req.Method != "DELETE" {
 		http.NotFound(w, req)
 		return
 	}
 	switch req.Method {
 	case "DELETE":
-		if err := req.ParseForm(); err != nil {
-			fmt.Fprintf(w, "%v", err)
-			return
-		}
-		category := req.FormValue("category")
-		task_id := req.FormValue("task_id")
-		err := delete_task(&task_manager, &cmd_manager, category, task_id)
+		task_id := strings.Split(req.URL.Path, "/")[1]
+		err := delete_task(&task_manager, &cmd_manager, task_id)
 		if err != nil {
 			fmt.Fprintf(w, "%v\n", err)
 			return
 		}
-		// XXX Yes we are assuming we are at /todo here, which is handled by nginx
-		http.Redirect(w, req, "/todo", http.StatusSeeOther)
 	case "POST":
 		if err := req.ParseForm(); err != nil {
 			fmt.Fprintf(w, "%v", err)
@@ -138,13 +131,8 @@ func create_task(task_manager *todo.TaskManager, cmd_manager *todo.CommandManage
 }
 
 func delete_task(task_manager *todo.TaskManager, cmd_manager *todo.CommandManager,
-	category, task_id string) error {
-
-	original := task_manager.StorageDirectory
-	defer reset_category(task_manager, original)
-	set_category(task_manager, category)
-
-	_, err := cmd_manager.DeleteTask(task_manager, task_id, true)
+	task_id string) error {
+	_, err := cmd_manager.DeleteTask(task_manager, task_id, false)
 	if err != nil {
 		return err
 	}

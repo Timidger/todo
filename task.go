@@ -46,6 +46,10 @@ func min(a, b int) int {
 	return b
 }
 
+func (task Task) GetFullIndex() string {
+	return task.full_index
+}
+
 func (task Task) Category() string {
 	if task.category != nil {
 		return *task.category
