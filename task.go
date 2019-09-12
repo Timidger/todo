@@ -65,7 +65,7 @@ func (task Task) String() string {
 	days_left := " "
 	due_date := time.Now().AddDate(0, 0, -task.Overdue_days+1)
 	if task.DueBefore(due_date) {
-		passed_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
+		passed_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days).Truncate(24 * time.Hour)
 		overdue_days := int(math.Floor(time.Now().Sub(passed_due_date).Hours() / 24))
 		if task.DueBefore(time.Now().Truncate(24*time.Hour)) && overdue_days >= 0 {
 			if overdue_days == 1 || overdue_days == 0 {
