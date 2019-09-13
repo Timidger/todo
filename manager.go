@@ -293,7 +293,7 @@ func (tasks_ Tasks) FilterTasksDueBeforeToday() []Task {
 	return tasks
 }
 
-func (manager *TaskManager) AuditLog(task Task, done_date time.Time) {
+func (manager *TaskManager) AuditLog(task Task, done_date time.Time, annotation string) {
 	create_dir(manager.StorageDirectory)
 	audit_log_path := path.Join(manager.StorageDirectory, AUDIT_LOG)
 	var audit_log_file *os.File
@@ -302,7 +302,7 @@ func (manager *TaskManager) AuditLog(task Task, done_date time.Time) {
 		if err != nil {
 			panic(err)
 		}
-		audit_log_file.WriteString("#" + Fields())
+		audit_log_file.WriteString("#" + AUDIT_FIELDS)
 	} else {
 		audit_log_file, err = os.OpenFile(audit_log_path, os.O_APPEND|os.O_WRONLY, 0600)
 		if err != nil {
@@ -320,6 +320,7 @@ func (manager *TaskManager) AuditLog(task Task, done_date time.Time) {
 	record.Repeat = task.Repeat
 	record.Overdue_days = task.Overdue_days
 	record.DateCompleted = done_date
+	record.Annotation = annotation
 
 	if err := audit_log.Write(record.Marshal()); err != nil {
 		panic(err)
@@ -346,7 +347,7 @@ func (manager *TaskManager) AuditRecords() Records {
 		defer audit_log_file.Close()
 
 		audit_log := csv.NewReader(audit_log_file)
-		audit_log.FieldsPerRecord = FieldCount()
+		audit_log.FieldsPerRecord = -1
 		audit_log.Comment = '#'
 
 		read_records, err := audit_log.ReadAll()

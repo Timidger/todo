@@ -9,6 +9,10 @@ import (
 )
 
 const AUDIT_LOG = "audit_log/"
+const AUDIT_MINIMUM_FIELDS = 6 // XXX don't need "Notes"
+const AUDIT_FIELDS = "Body_content, Due_date, Repeat, Overdue_days," +
+	"Category, DateCompleted, Notes" +
+	"\n"
 
 type Records []Record
 
@@ -38,6 +42,7 @@ type Record struct {
 	// separate directories.
 	Category      string
 	DateCompleted time.Time
+	Annotation    string
 }
 
 func (record Record) Marshal() []string {
@@ -51,6 +56,7 @@ func (record Record) Marshal() []string {
 	// Category determined at load time, from directory of audit_log
 	category := ""
 	date_completed := record.DateCompleted.Format(RECORD_TIME_FORMAT)
+	annotation := record.Annotation
 	return []string{
 		body_content,
 		due_date,
@@ -58,6 +64,7 @@ func (record Record) Marshal() []string {
 		overdue_days,
 		category,
 		date_completed,
+		annotation,
 	}
 }
 
@@ -78,8 +85,9 @@ func (record Record) String() string {
 	}
 
 	trimmed_content := strings.TrimSuffix(record.Body_content, "\n")
+	var output string
 	if len(record.Body_content) < CONTENT_LENGTH {
-		return fmt.Sprintf("%s  %-60v%-15s%s", completed, trimmed_content, category_name, overdue)
+		output = fmt.Sprintf("%s  %-60v%-15s%s", completed, trimmed_content, category_name, overdue)
 	} else {
 		words := strings.Split(trimmed_content, " ")
 		first := true
@@ -101,13 +109,17 @@ func (record Record) String() string {
 		if len(buffer) != 0 {
 			result += fmt.Sprintf("\n                         %v", buffer)
 		}
-		return result
+		output = result
 	}
+	if record.Annotation != "" {
+		output += "\n                         ┗━ " + record.Annotation
+	}
+	return output
 }
 
 func Unmarshal(fields []string) Record {
-	if len(fields) != FieldCount() {
-		panic(fmt.Sprintf("actual %d != expected %d", len(fields), FieldCount()))
+	if len(fields) < AUDIT_MINIMUM_FIELDS {
+		panic(fmt.Sprintf("actual %d != expected at least %d", len(fields), AUDIT_MINIMUM_FIELDS))
 	}
 	var record Record
 	record.Body_content = fields[0]
@@ -121,13 +133,9 @@ func Unmarshal(fields []string) Record {
 	record.Category = fields[4]
 	record.DateCompleted, _ = time.Parse(RECORD_TIME_FORMAT, fields[5])
 
+	if len(fields) >= 7 {
+		record.Annotation = fields[6]
+	}
+
 	return record
-}
-
-func Fields() string {
-	return "Body_content, Due_date, Repeat, Overdue_days, Category, DateCompleted" + "\n"
-}
-
-func FieldCount() int {
-	return strings.Count(Fields(), ",") + 1
 }

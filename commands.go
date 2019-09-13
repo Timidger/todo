@@ -41,6 +41,8 @@ type CommandManager struct {
 	// If certain actions have been taken skip task creation from stdin
 	// This only makes sense for the command line.
 	SkipTaskCreationPrompt bool
+	// Annotation to add to the audit log when deleting a task.
+	Annotation string
 }
 
 // -t
@@ -204,7 +206,7 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 		if task_deleted.category != nil {
 			task_manager.StorageDirectory = path.Join(task_manager.StorageDirectory, *task_deleted.category)
 		}
-		task_manager.AuditLog(*task_deleted, cmd_manager.DueDate)
+		task_manager.AuditLog(*task_deleted, cmd_manager.DueDate, cmd_manager.Annotation)
 		task_manager.StorageDirectory = original_StorageDirectory
 	}
 

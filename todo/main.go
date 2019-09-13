@@ -32,6 +32,8 @@ const help_message = "Usage of todo:\n" +
 	"                  Default 0, Must be positive.\n" +
 	"  -n <number>     Days until this task is actually due. Think of this as \"How many days I want to work on this task\"\n" +
 	"                  Default 0, must be positive\n" +
+	"  -e <notes>      Annotate task completion so it shows up in the audit log later\n" +
+	"                  Can be paired with -d or -s\n" +
 	"  -c <category>   Specify a category\n" +
 	"  -C <category>   Create a new category\n" +
 	"  -L              List all the categories\n" +
@@ -39,7 +41,7 @@ const help_message = "Usage of todo:\n" +
 	"  -S <directory>  Specify a custom todo directory (default is ~/.todo). Primarily used for testing\n"
 
 func main() {
-	opts, others, err := getopt.Getopts(os.Args, "ALhalt:d:x:D:S:C:c:r:n:s:")
+	opts, others, err := getopt.Getopts(os.Args, "ALhalt:d:x:D:S:C:c:r:n:s:e:")
 	if err != nil {
 		fmt.Printf("%s", help_message)
 		return
@@ -159,6 +161,8 @@ func main() {
 			for _, record := range records {
 				fmt.Println(record.String())
 			}
+		case 'e':
+			cmd_manager.Annotation = opt.Value
 		}
 
 	}
