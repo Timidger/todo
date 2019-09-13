@@ -82,31 +82,9 @@ func (task Task) String() string {
 			int(math.Ceil(final_due_date.Sub(time.Now()).Hours()/24)))
 	}
 	trimmed_content := strings.TrimSuffix(task.Body_content, "\n")
-	if len(task.Body_content) < CONTENT_LENGTH {
-		return fmt.Sprintf("%-10s%-60v%-15s%s", task.index+":", trimmed_content, category_name, days_left)
-	} else {
-		words := strings.Split(trimmed_content, " ")
-		first := true
-		result := ""
-		buffer := ""
-		for _, word := range words {
-			if len(buffer)+len(word)+1 > CONTENT_LENGTH {
-				if first {
-					result = fmt.Sprintf("%-10s%-60v%-15s%s",
-						task.index+":", buffer, category_name, days_left)
-					first = false
-				} else {
-					result += fmt.Sprintf("\n          %v", buffer)
-				}
-				buffer = ""
-			}
-			buffer += word + " "
-		}
-		if len(buffer) != 0 {
-			result += fmt.Sprintf("\n          %v", buffer)
-		}
-		return result
-	}
+	preamble := task.index + ":"
+	return HardWrapString(trimmed_content, 60,
+		preamble, 10, fmt.Sprintf("%-15s%s", category_name, days_left))
 }
 
 /// Creates a new task, without saving it.

@@ -85,36 +85,13 @@ func (record Record) String() string {
 	}
 
 	trimmed_content := strings.TrimSuffix(record.Body_content, "\n")
-	var output string
-	if len(record.Body_content) < CONTENT_LENGTH {
-		output = fmt.Sprintf("%s  %-60v%-15s%s", completed, trimmed_content, category_name, overdue)
-	} else {
-		words := strings.Split(trimmed_content, " ")
-		first := true
-		result := ""
-		buffer := ""
-		for _, word := range words {
-			if len(buffer)+len(word)+1 > CONTENT_LENGTH {
-				if first {
-					result = fmt.Sprintf("%s  %-60v%-15s%s",
-						completed, buffer, category_name, overdue)
-					first = false
-				} else {
-					result += fmt.Sprintf("\n                         %v", buffer)
-				}
-				buffer = ""
-			}
-			buffer += word + " "
-		}
-		if len(buffer) != 0 {
-			result += fmt.Sprintf("\n                         %v", buffer)
-		}
-		output = result
-	}
+	postamble := fmt.Sprintf("%-15s%s", category_name, overdue)
+	audit_entry := HardWrapString(trimmed_content, 60,
+		completed, len(completed)+2, postamble)
 	if record.Annotation != "" {
-		output += "\n                         ┗━ " + record.Annotation
+		audit_entry += "\n                         ┗━ " + record.Annotation
 	}
-	return output
+	return audit_entry
 }
 
 func Unmarshal(fields []string) Record {

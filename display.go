@@ -3,6 +3,7 @@ package todo
 import (
 	"fmt"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -54,4 +55,50 @@ func DisplayTasksLong(tasks Tasks) {
 		}
 		fmt.Println(task.FormatTask())
 	}
+}
+
+/// Hard wraps a string to max_length. postamble will always be on the
+/// first line after the max_length content (postamble is not hard wrapped).
+///
+/// Each paragraph will be indented at least preamble_length amount.
+/// Pre-amble will be on the first line only.
+func HardWrapString(paragraph string, max_length int,
+	preamble_part string, preamble_length int,
+	postamble string) string {
+	append_header := func(body string) string {
+		return fmt.Sprintf("%-*s%-*v%s",
+			preamble_length,
+			preamble_part,
+			max_length,
+			body,
+			postamble)
+	}
+
+	preamble := fmt.Sprintf("%-*s", preamble_length, " ")
+
+	if len(paragraph) < max_length {
+		return append_header(paragraph)
+	}
+
+	words := strings.Split(paragraph, " ")
+	first := true
+	result := ""
+	buffer := ""
+	for _, word := range words {
+		if len(buffer)+len(word)+1 > CONTENT_LENGTH {
+			if first {
+				result = append_header(buffer)
+				first = false
+			} else {
+				result += "\n" + preamble + buffer
+			}
+			buffer = ""
+		}
+		buffer += word + " "
+	}
+
+	if len(buffer) != 0 {
+		result += "\n" + preamble + buffer
+	}
+	return result
 }
