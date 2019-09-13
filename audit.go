@@ -87,9 +87,14 @@ func (record Record) String() string {
 	trimmed_content := strings.TrimSuffix(record.Body_content, "\n")
 	postamble := fmt.Sprintf("%-15s%s", category_name, overdue)
 	audit_entry := HardWrapString(trimmed_content, 60,
-		completed, len(completed)+2, postamble)
+		completed, len(completed)+2, postamble, " ")
 	if record.Annotation != "" {
-		audit_entry += "\n                         ┗━ " + record.Annotation
+		if len(record.Annotation) >= 60 {
+			audit_entry += HardWrapString(record.Annotation, 60,
+				"\n                         ┃  ", len(completed)+5, " ", "┃  ")
+		} else {
+			audit_entry += "\n                         ┗━ " + record.Annotation
+		}
 	}
 	return audit_entry
 }

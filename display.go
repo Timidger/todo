@@ -64,7 +64,7 @@ func DisplayTasksLong(tasks Tasks) {
 /// Pre-amble will be on the first line only.
 func HardWrapString(paragraph string, max_length int,
 	preamble_part string, preamble_length int,
-	postamble string) string {
+	postamble string, every_line_preamble string) string {
 	append_header := func(body string) string {
 		return fmt.Sprintf("%-*s%-*v%s",
 			preamble_length,
@@ -74,7 +74,7 @@ func HardWrapString(paragraph string, max_length int,
 			postamble)
 	}
 
-	preamble := fmt.Sprintf("%-*s", preamble_length, " ")
+	preamble := fmt.Sprintf("%*s", preamble_length, every_line_preamble)
 
 	if len(paragraph) < max_length {
 		return append_header(paragraph)

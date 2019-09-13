@@ -83,8 +83,12 @@ func (task Task) String() string {
 	}
 	trimmed_content := strings.TrimSuffix(task.Body_content, "\n")
 	preamble := task.index + ":"
-	return HardWrapString(trimmed_content, 60,
-		preamble, 10, fmt.Sprintf("%-15s%s", category_name, days_left))
+	return HardWrapString(trimmed_content,
+		60,
+		preamble,
+		10,
+		fmt.Sprintf("%-15s%s", category_name, days_left),
+		" ")
 }
 
 /// Creates a new task, without saving it.
