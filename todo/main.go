@@ -112,11 +112,10 @@ func main() {
 		case 'r':
 			days, err := strconv.ParseInt(opt.Value, 10, 32)
 			if err != nil {
-				todo.LogError(fmt.Sprintf("Bad delay time: %s", opt.Value))
-				os.Exit(1)
+				err = cmd_manager.SetRepeatHumany(opt.Value)
+			} else {
+				err = cmd_manager.SetRepeat(int(days))
 			}
-
-			err = cmd_manager.SetRepeat(int(days))
 			if err != nil {
 				todo.LogError(err.Error())
 				os.Exit(1)

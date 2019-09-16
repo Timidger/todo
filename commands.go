@@ -205,7 +205,46 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 		if err != nil {
 			task_deleted.Due_date = task_deleted.Due_date.Add(delay)
 		} else {
-			// TODO
+			// Must be human-y
+			days := strings.Split(*task_deleted.Repeat, ",")
+			if len(days) == 0 {
+				return nil, errors.New("Empty repeat is not allowed")
+			}
+			if len(days) == 1 {
+				delay, err := humany_time(days[0])
+				if err != nil {
+					return nil, err
+				}
+				task_deleted.Due_date = delay
+			} else {
+				var cur_delay time.Time
+				var err error
+				delay_set := false
+				for _, day := range days {
+					cur_delay, err = humany_time(day)
+					if err != nil {
+						continue
+					}
+					if cur_delay.After(time.Now()) {
+						task_deleted.Due_date = cur_delay
+						err = nil
+						delay_set = true
+						break
+					}
+				}
+				if !delay_set {
+					// Get the earliest next date -- which is guaranteed to be the first one
+					delay, err := humany_time(days[0])
+					if err != nil {
+						return nil, err
+					}
+					task_deleted.Due_date = delay
+				}
+				if err != nil {
+					return nil, err
+				}
+			}
+
 		}
 		if err := task_manager.SaveTask(task_deleted); err != nil {
 			return nil, err
@@ -223,6 +262,20 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 	}
 
 	return task_deleted, nil
+}
+
+// -r
+func (cmd_manager *CommandManager) SetRepeatHumany(days string) error {
+	for _, day := range strings.Split(days, ",") {
+		switch strings.Title(day) {
+		case "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday":
+			continue
+		default:
+			return errors.New(fmt.Sprintf("Invalid repeat day %s", day))
+		}
+	}
+	cmd_manager.Repeat = &days
+	return nil
 }
 
 // -r
