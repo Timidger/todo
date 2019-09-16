@@ -27,7 +27,10 @@ type Task struct {
 	Due_date time.Time
 	// When to repeat this task when it is deleted.
 	// If it is null this task does not repeat.
-	Repeat *time.Duration
+	//
+	// Can either be a time.Duration (as an int) or a more flexible date
+	// representation (e.g. Monday or a list of days with , separating).
+	Repeat *string
 	// How many days until this task is actually due.
 	Overdue_days int
 	file_name    string
@@ -92,7 +95,7 @@ func (task Task) String() string {
 }
 
 /// Creates a new task, without saving it.
-func NewTask(text string, due_date time.Time, repeat *time.Duration, overdue_days int) (Task, error) {
+func NewTask(text string, due_date time.Time, repeat *string, overdue_days int) (Task, error) {
 	if !utf8.ValidString(text) {
 		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
 	}

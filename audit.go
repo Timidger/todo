@@ -35,7 +35,7 @@ func (records Records) Swap(i, j int) {
 type Record struct {
 	Body_content string
 	Due_date     time.Time
-	Repeat       *time.Duration
+	Repeat       *string
 	Overdue_days int
 	// This is actually determined at load time again,
 	// since audit logs store the category by virtue of being in
@@ -50,7 +50,7 @@ func (record Record) Marshal() []string {
 	due_date := record.Due_date.Format(EXPLICIT_TIME_FORMAT)
 	repeat := ""
 	if record.Repeat != nil {
-		repeat = record.Repeat.String()
+		repeat = *record.Repeat
 	}
 	overdue_days := strconv.Itoa(record.Overdue_days)
 	// Category determined at load time, from directory of audit_log
@@ -107,8 +107,7 @@ func Unmarshal(fields []string) Record {
 	record.Body_content = fields[0]
 	record.Due_date, _ = time.Parse(EXPLICIT_TIME_FORMAT, fields[1])
 	if fields[2] != "" {
-		repeat, _ := time.ParseDuration(fields[2])
-		record.Repeat = &repeat
+		record.Repeat = &fields[2]
 	}
 	overdue_days, _ := strconv.ParseInt(fields[3], 10, 32)
 	record.Overdue_days = int(overdue_days)

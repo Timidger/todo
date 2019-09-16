@@ -37,7 +37,7 @@ type CommandManager struct {
 	DueDate     time.Time
 	// If time is set manually we can behave differently
 	TimeSet bool
-	Repeat  *time.Duration
+	Repeat  *string
 	// If certain actions have been taken skip task creation from stdin
 	// This only makes sense for the command line.
 	SkipTaskCreationPrompt bool
@@ -194,7 +194,13 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 
 	if !force_delete && task_deleted.Repeat != nil {
 		// Recreate the task if it has a repeat.
-		task_deleted.Due_date = task_deleted.Due_date.Add(*task_deleted.Repeat)
+
+		delay, err := time.ParseDuration(*task_deleted.Repeat)
+		if err != nil {
+			task_deleted.Due_date = task_deleted.Due_date.Add(delay)
+		} else {
+			// TODO
+		}
 		if err := task_manager.SaveTask(task_deleted); err != nil {
 			return nil, err
 		}
@@ -223,7 +229,8 @@ func (cmd_manager *CommandManager) SetRepeat(days int) error {
 	if err != nil {
 		return err
 	}
-	cmd_manager.Repeat = &hours
+	hours_str := string(hours)
+	cmd_manager.Repeat = &hours_str
 
 	return nil
 }
