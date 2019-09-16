@@ -225,6 +225,7 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 					if err != nil {
 						continue
 					}
+					// TODO This logic is wrong
 					if cur_delay.After(time.Now()) {
 						task_deleted.Due_date = cur_delay
 						err = nil
@@ -233,6 +234,7 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 					}
 				}
 				if !delay_set {
+					// TODO this isn't true
 					// Get the earliest next date -- which is guaranteed to be the first one
 					delay, err := humany_time(days[0])
 					if err != nil {
