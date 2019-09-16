@@ -202,7 +202,7 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 		// Recreate the task if it has a repeat.
 
 		delay, err := time.ParseDuration(*task_deleted.Repeat)
-		if err != nil {
+		if err == nil {
 			task_deleted.Due_date = task_deleted.Due_date.Add(delay)
 		} else {
 			// Must be human-y
