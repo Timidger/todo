@@ -123,7 +123,7 @@ func create_task(task_manager *todo.TaskManager, cmd_manager *todo.CommandManage
 	defer reset_category(task_manager, original)
 	set_category(task_manager, category)
 
-	err := cmd_manager.CreateTask(task_manager, task_body)
+	_, err := cmd_manager.CreateTask(task_manager, task_body)
 	if err != nil {
 		return err
 	}
