@@ -51,13 +51,11 @@ func (cmd_manager *CommandManager) SetDueDate(new_due_date time.Time) {
 	cmd_manager.TimeSet = true
 }
 
-// -t
-func (cmd_manager *CommandManager) SetDueDateRelative(new_due_date string) error {
-	cmd_manager.TimeSet = true
+func humany_time(day string) (time.Time, error) {
 	today := time.Now()
 	relative_day := 0
 	cur_weekday := int(today.Weekday())
-	switch strings.Title(new_due_date) {
+	switch strings.Title(day) {
 	case "Sunday":
 		relative_day = 0
 	case "Monday":
@@ -75,31 +73,39 @@ func (cmd_manager *CommandManager) SetDueDateRelative(new_due_date string) error
 	case "Tomorrow":
 		relative_day = (cur_weekday + 1) % 7
 	case "Today":
-		cmd_manager.DueDate = today
-		return nil
+		return today, nil
 	case "Yesterday":
-		cmd_manager.DueDate = today.AddDate(0, 0, -1)
-		return nil
+		return today.AddDate(0, 0, -1), nil
 	default:
-		// Attempt to use date as a fallback, using ISO-8601 format
-		var due_date time.Time
-		out, err := exec.Command("/usr/bin/date", "--iso-8601", "-d", new_due_date).Output()
-		if err != nil {
-			return errors.New(fmt.Sprintf("/usr/bin/date failed: %v", err))
-		}
-		new_due_date = strings.ReplaceAll(strings.TrimSpace(string(out)), "-", "/")
-		due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, new_due_date+" EDT")
-		if err != nil {
-			return errors.New(fmt.Sprintf("Bad date: %s", new_due_date))
-		}
-		cmd_manager.DueDate = due_date
-		return nil
+		return today, errors.New(fmt.Sprintf("Invalid human-y day %s", day))
 	}
 	if cur_weekday < relative_day {
-		cmd_manager.DueDate = today.AddDate(0, 0, int(relative_day-cur_weekday))
+		return today.AddDate(0, 0, int(relative_day-cur_weekday)), nil
 	} else {
-		cmd_manager.DueDate = today.AddDate(0, 0, 7-(cur_weekday-relative_day))
+		return today.AddDate(0, 0, 7-(cur_weekday-relative_day)), nil
 	}
+}
+
+// -t
+func (cmd_manager *CommandManager) SetDueDateRelative(new_due_date string) error {
+	cmd_manager.TimeSet = true
+	human_due_date, err := humany_time(new_due_date)
+	if err != nil {
+		cmd_manager.DueDate = human_due_date
+		return nil
+	}
+	// Attempt to use date as a fallback, using ISO-8601 format
+	var due_date time.Time
+	out, err := exec.Command("/usr/bin/date", "--iso-8601", "-d", new_due_date).Output()
+	if err != nil {
+		return errors.New(fmt.Sprintf("/usr/bin/date failed: %v", err))
+	}
+	new_due_date = strings.ReplaceAll(strings.TrimSpace(string(out)), "-", "/")
+	due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, new_due_date+" EDT")
+	if err != nil {
+		return errors.New(fmt.Sprintf("Bad date: %s", new_due_date))
+	}
+	cmd_manager.DueDate = due_date
 	return nil
 }
 
