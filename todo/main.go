@@ -108,7 +108,11 @@ func main() {
 				todo.LogSuccess(task_deleted.String())
 			}
 		case 's':
-			cmd_manager.SkipTask(&task_manager, opt.Value)
+			err := cmd_manager.SkipTask(&task_manager, opt.Value)
+			if err != nil {
+				todo.LogError(err.Error())
+				os.Exit(1)
+			}
 		case 'r':
 			days, err := strconv.ParseInt(opt.Value, 10, 32)
 			if err != nil {
