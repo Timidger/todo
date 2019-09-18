@@ -66,7 +66,7 @@ func (task Task) String() string {
 		category_name = "(" + *task.category + ")"
 	}
 	days_left := " "
-	due_date := time.Now().AddDate(0, 0, -task.Overdue_days+1)
+	due_date := time.Now().AddDate(0, 0, -task.Overdue_days)
 	if task.DueBefore(due_date) {
 		passed_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days).Truncate(24 * time.Hour)
 		overdue_days := int(math.Floor(time.Now().Sub(passed_due_date).Hours() / 24))
@@ -81,8 +81,12 @@ func (task Task) String() string {
 		}
 	} else if task.Overdue_days > 0 {
 		final_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
-		days_left = fmt.Sprintf(" (%d days left)",
-			int(math.Ceil(final_due_date.Sub(time.Now()).Hours()/24)))
+		days := int(math.Ceil(final_due_date.Sub(time.Now()).Hours() / 24))
+		if days == 1 {
+			days_left = fmt.Sprintf(" (%d day left)", days)
+		} else {
+			days_left = fmt.Sprintf(" (%d days left)", days)
+		}
 	}
 	trimmed_content := strings.TrimSuffix(task.Body_content, "\n")
 	preamble := task.index + ":"
