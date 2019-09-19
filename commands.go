@@ -52,6 +52,30 @@ func (cmd_manager *CommandManager) SetDueDate(new_due_date time.Time) {
 	cmd_manager.TimeSet = true
 }
 
+func get_humany_next_delay(days_string string) (*time.Time, error) {
+	// Must be human-y
+	today := time.Now()
+	days := strings.Split(days_string, ",")
+	if len(days) == 0 {
+		return nil, errors.New("Empty repeat is not allowed")
+	}
+	// Get the soonest time
+	var lowest *time.Duration = nil
+	var earliest *time.Time = nil
+	for _, day := range days {
+		cur_day, err := humany_time(day)
+		if err != nil {
+			return nil, err
+		}
+		diff := cur_day.Sub(today)
+		if lowest == nil || diff < *lowest {
+			lowest = &diff
+			earliest = &cur_day
+		}
+	}
+	return earliest, nil
+}
+
 func humany_time(day string) (time.Time, error) {
 	today := time.Now()
 	relative_day := 0
@@ -201,54 +225,15 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 
 	if !force_delete && task_deleted.Repeat != nil {
 		// Recreate the task if it has a repeat.
-
 		delay, err := strconv.Atoi(*task_deleted.Repeat)
-		if err == nil {
-			task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, delay)
+		if err != nil {
+			next, err := get_humany_next_delay(*task_deleted.Repeat)
+			if err != nil {
+				return nil, err
+			}
+			task_deleted.Due_date = *next
 		} else {
-			fmt.Println(err)
-			// Must be human-y
-			days := strings.Split(*task_deleted.Repeat, ",")
-			if len(days) == 0 {
-				return nil, errors.New("Empty repeat is not allowed")
-			}
-			if len(days) == 1 {
-				delay, err := humany_time(days[0])
-				if err != nil {
-					return nil, err
-				}
-				task_deleted.Due_date = delay
-			} else {
-				var cur_delay time.Time
-				var err error
-				delay_set := false
-				for _, day := range days {
-					cur_delay, err = humany_time(day)
-					if err != nil {
-						continue
-					}
-					// TODO This logic is wrong
-					if cur_delay.After(time.Now()) {
-						task_deleted.Due_date = cur_delay
-						err = nil
-						delay_set = true
-						break
-					}
-				}
-				if !delay_set {
-					// TODO this isn't true
-					// Get the earliest next date -- which is guaranteed to be the first one
-					delay, err := humany_time(days[0])
-					if err != nil {
-						return nil, err
-					}
-					task_deleted.Due_date = delay
-				}
-				if err != nil {
-					return nil, err
-				}
-			}
-
+			task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, delay)
 		}
 		if err := task_manager.SaveTask(task_deleted); err != nil {
 			return nil, err
