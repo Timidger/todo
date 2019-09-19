@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os/exec"
 	"path"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -201,10 +202,11 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 	if !force_delete && task_deleted.Repeat != nil {
 		// Recreate the task if it has a repeat.
 
-		delay, err := time.ParseDuration(*task_deleted.Repeat)
+		delay, err := strconv.Atoi(*task_deleted.Repeat)
 		if err == nil {
-			task_deleted.Due_date = task_deleted.Due_date.Add(delay)
+			task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, delay)
 		} else {
+			fmt.Println(err)
 			// Must be human-y
 			days := strings.Split(*task_deleted.Repeat, ",")
 			if len(days) == 0 {
@@ -286,12 +288,8 @@ func (cmd_manager *CommandManager) SetRepeat(days int) error {
 		return errors.New("Repeat time must be a positive, non-zero number")
 	}
 
-	hours, err := time.ParseDuration(fmt.Sprintf("%dh", days*24))
-	if err != nil {
-		return err
-	}
-	hours_str := string(hours)
-	cmd_manager.Repeat = &hours_str
+	hours := strconv.Itoa(int(days))
+	cmd_manager.Repeat = &hours
 
 	return nil
 }
