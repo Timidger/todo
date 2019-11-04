@@ -61,7 +61,8 @@ func main() {
 			fmt.Printf("%s", help_message)
 			return
 		case 't':
-			due_date, err := time.Parse(todo.EXPLICIT_TIME_FORMAT, opt.Value+" EDT")
+			zone, _ := time.Now().Zone()
+			due_date, err := time.Parse(todo.EXPLICIT_TIME_FORMAT, fmt.Sprintf("%v %s", opt.Value, zone))
 			if err == nil {
 				cmd_manager.SetDueDate(due_date)
 			} else {

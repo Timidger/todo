@@ -126,7 +126,8 @@ func (cmd_manager *CommandManager) SetDueDateRelative(new_due_date string) error
 		return errors.New(fmt.Sprintf("/usr/bin/date failed: %v", err))
 	}
 	new_due_date = strings.ReplaceAll(strings.TrimSpace(string(out)), "-", "/")
-	due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, new_due_date+" EDT")
+	zone, _ := time.Now().Zone()
+	due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, fmt.Sprintf("%s %s", new_due_date, zone))
 	if err != nil {
 		return errors.New(fmt.Sprintf("Bad date: %s", new_due_date))
 	}
