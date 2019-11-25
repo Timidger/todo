@@ -82,7 +82,9 @@ func (task Task) String() string {
 	} else if task.Overdue_days > 0 {
 		final_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
 		days := int(math.Ceil(final_due_date.Sub(time.Now()).Hours() / 24))
-		if days == 1 {
+		if days == 0 {
+			days_left = " (due today)"
+		} else if days == 1 {
 			days_left = fmt.Sprintf(" (%d day left)", days)
 		} else {
 			days_left = fmt.Sprintf(" (%d days left)", days)
