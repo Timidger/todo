@@ -29,7 +29,7 @@ const help_message = "Usage of todo:\n" +
 	"                  Date uses YYYY/MM/DD. Relative days such as \"Monday\" or \"Tomorrow\" are also supported\n" +
 	"                  If coupled with -A then it will show logs of any events on or after this date\n" +
 	"  -r <number>     Repeat this task after a number of days. Based on the due date, not the day it was deleted\n" +
-	"                  Default 0, Must be positive.\n" +
+	"                  Default 0, Must be either a positive number or days separated by \",\".\n" +
 	"  -n <number>     Days until this task is actually due. Think of this as \"How many days I want to work on this task\"\n" +
 	"                  Default 0, must be positive\n" +
 	"  -e <notes>      Annotate task completion so it shows up in the audit log later\n" +

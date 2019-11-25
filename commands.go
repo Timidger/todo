@@ -52,28 +52,59 @@ func (cmd_manager *CommandManager) SetDueDate(new_due_date time.Time) {
 	cmd_manager.TimeSet = true
 }
 
-func get_humany_next_delay(days_string string) (*time.Time, error) {
+func get_humany_next_delay(days_string string) (time.Time, error) {
 	// Must be human-y
 	today := time.Now()
 	days := strings.Split(days_string, ",")
 	if len(days) == 0 {
-		return nil, errors.New("Empty repeat is not allowed")
+		return today, errors.New("Empty repeat is not allowed")
 	}
-	// Get the soonest time
-	var lowest *time.Duration = nil
-	var earliest *time.Time = nil
-	for _, day := range days {
-		cur_day, err := humany_time(day)
+	/* We want the lowest index day _after_ today's
+	where Sunday = 0, Saturday = 6
+	If there is no number after today then just the smallest one. */
+	today_index := int(today.Weekday())
+	day_indices := make([]int, len(days))
+	for index, day := range days {
+		var err error
+		day_indices[index], err = day_to_index(day)
 		if err != nil {
-			return nil, err
-		}
-		diff := cur_day.Sub(today)
-		if lowest == nil || diff < *lowest {
-			lowest = &diff
-			earliest = &cur_day
+			return today, err
 		}
 	}
-	return earliest, nil
+	index_of_lowest := 0
+	for index, day_index := range day_indices[1:] {
+		if day_indices[index_of_lowest] < today_index && day_index < today_index {
+			index_of_lowest = index
+		}
+		if day_index > today_index && day_index < day_indices[index_of_lowest] {
+			index_of_lowest = index
+		}
+	}
+	if index_of_lowest == today_index {
+		return today.AddDate(0, 0, 7), nil
+	}
+	return humany_time(days[index_of_lowest])
+}
+
+func day_to_index(day string) (int, error) {
+	switch strings.Title(day) {
+	case "Sunday":
+		return 0, nil
+	case "Monday":
+		return 1, nil
+	case "Tuesday":
+		return 2, nil
+	case "Wednesday":
+		return 3, nil
+	case "Thursday":
+		return 4, nil
+	case "Friday":
+		return 5, nil
+	case "Saturday":
+		return 6, nil
+	default:
+		return 0, errors.New(fmt.Sprintf("Invalid day %s", day))
+	}
 }
 
 func humany_time(day string) (time.Time, error) {
@@ -228,11 +259,10 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 		// Recreate the task if it has a repeat.
 		delay, err := strconv.Atoi(*task_deleted.Repeat)
 		if err != nil {
-			next, err := get_humany_next_delay(*task_deleted.Repeat)
+			task_deleted.Due_date, err = get_humany_next_delay(*task_deleted.Repeat)
 			if err != nil {
 				return nil, err
 			}
-			task_deleted.Due_date = *next
 		} else {
 			task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, delay)
 		}
