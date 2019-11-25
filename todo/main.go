@@ -46,6 +46,7 @@ func main() {
 		fmt.Printf("%s", help_message)
 		return
 	}
+	var task *todo.Task
 	var task_manager todo.TaskManager
 	task_manager.StorageDirectory = path.Join(os.Getenv("HOME"), ".todo/")
 
@@ -56,10 +57,9 @@ func main() {
 	instant_delete := execute_flag_commands(&task_manager, &cmd_manager, opts)
 
 	if len(opts) > 0 && cmd_manager.SkipTaskCreationPrompt {
-		return
+		goto overdue_auto_removal
 	}
 
-	var task *todo.Task
 	if input := strings.Join(os.Args[others:], " "); len(os.Args) > 1 && input != "" {
 		task, err = cmd_manager.CreateTask(&task_manager, input)
 	} else {
@@ -80,6 +80,24 @@ func main() {
 		}
 		todo.LogSuccess(task_deleted.String())
 	}
+
+overdue_auto_removal:
+	// XXX At this point we can mess with the state as much as we want
+	// We want all to remove all out of date tasks at this point, so we
+	// the default state.
+	cmd_manager = todo.CommandManager{}
+	cmd_manager.DueDate = time.Now()
+	cmd_manager.Listing = todo.LISTING_DAY
+
+	task_manager = todo.TaskManager{}
+	task_manager.StorageDirectory = path.Join(os.Getenv("HOME"), ".todo/")
+
+	tasks, err := cmd_manager.GetTasks(&task_manager)
+	if err != nil {
+		todo.LogError(err.Error())
+		os.Exit(1)
+	}
+	cmd_manager.RemoveOverdueTasks(tasks, &task_manager)
 }
 
 // Read a task in from a reader and pass it off to add_task.
@@ -92,7 +110,8 @@ func readInTask(reader *bufio.Reader) string {
 	return text
 }
 
-func execute_flag_commands(task_manager *todo.TaskManager, cmd_manager *todo.CommandManager, opts []getopt.Option) bool {
+func execute_flag_commands(task_manager *todo.TaskManager,
+	cmd_manager *todo.CommandManager, opts []getopt.Option) bool {
 	instant_delete := false
 
 	for _, opt := range opts {

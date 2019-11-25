@@ -3,6 +3,7 @@ package todo
 import (
 	"errors"
 	"fmt"
+	"math"
 	"os/exec"
 	"path"
 	"strconv"
@@ -282,6 +283,20 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 	}
 
 	return task_deleted, nil
+}
+
+// Remove tasks that are overdue by 3 days.
+func (cmd_manager *CommandManager) RemoveOverdueTasks(tasks Tasks, task_manager *TaskManager) {
+	for _, task := range tasks {
+		final_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
+		overdue_days := int(math.Floor(time.Now().Sub(final_due_date).Hours() / 24))
+		if overdue_days > 3 {
+			// TODO Remove once I'm used to this feature
+			LogError(fmt.Sprintf("Auto removing overdue task \"%v\"",
+				task.Body_content))
+			cmd_manager.delete_task_helper(task_manager, task.full_index, true, false)
+		}
+	}
 }
 
 // -r
