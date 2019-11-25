@@ -53,126 +53,7 @@ func main() {
 	cmd_manager.DueDate = time.Now()
 	cmd_manager.Listing = todo.LISTING_DAY
 
-	instant_delete := false
-
-	for _, opt := range opts {
-		switch opt.Option {
-		case 'h':
-			fmt.Printf("%s", help_message)
-			return
-		case 't':
-			zone, _ := time.Now().Zone()
-			due_date, err := time.Parse(todo.EXPLICIT_TIME_FORMAT, fmt.Sprintf("%v %s", opt.Value, zone))
-			if err == nil {
-				cmd_manager.SetDueDate(due_date)
-			} else {
-				err = cmd_manager.SetDueDateRelative(opt.Value)
-				if err != nil {
-					todo.LogError(err.Error())
-					os.Exit(1)
-				}
-			}
-		case 'l':
-			tasks, err := cmd_manager.GetTasks(&task_manager)
-			if err != nil {
-				todo.LogError(err.Error())
-				os.Exit(1)
-			}
-
-			todo.DisplayTasks(tasks)
-		case 'a':
-			cmd_manager.UseAllTasks()
-		case 'D':
-			task_deleted, err := cmd_manager.DeleteTask(&task_manager, opt.Value, true)
-			if err != nil {
-				todo.LogError(err.Error())
-				os.Exit(1)
-			}
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				fmt.Printf(task_deleted.Body_content)
-			}
-		case 'd':
-			if opt.Value == "this" {
-				instant_delete = true
-				continue
-			}
-			task_deleted, err := cmd_manager.DeleteTask(&task_manager, opt.Value, false)
-			if err != nil {
-				todo.LogError(err.Error())
-				os.Exit(1)
-			}
-			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				fmt.Printf(task_deleted.Body_content)
-			} else {
-				todo.LogSuccess(task_deleted.String())
-			}
-		case 's':
-			err := cmd_manager.SkipTask(&task_manager, opt.Value)
-			if err != nil {
-				todo.LogError(err.Error())
-				os.Exit(1)
-			}
-		case 'r':
-			days, err := strconv.ParseInt(opt.Value, 10, 32)
-			if err != nil {
-				err = cmd_manager.SetRepeatHumany(opt.Value)
-			} else {
-				err = cmd_manager.SetRepeat(int(days))
-			}
-			if err != nil {
-				todo.LogError(err.Error())
-				os.Exit(1)
-			}
-		case 'x':
-			err := cmd_manager.DelayTask(&task_manager, opt.Value)
-			if err != nil {
-				todo.LogError(err.Error())
-				os.Exit(1)
-			}
-		case 'S':
-			task_manager.StorageDirectory = opt.Value
-		case 'c':
-			category := opt.Value
-			category_path := path.Join(task_manager.StorageDirectory, category)
-			if _, err := os.Stat(category_path); os.IsNotExist(err) {
-				todo.LogError(fmt.Sprintf("Category \"%s\" does not exist", category))
-				os.Exit(1)
-			}
-			fallthrough
-		case 'C':
-			task_manager.StorageDirectory = path.Join(task_manager.StorageDirectory, opt.Value)
-		case 'L':
-			categories := cmd_manager.GetCategories(&task_manager)
-			for _, category := range categories {
-				fmt.Println(category)
-			}
-		case 'n':
-			days, err := strconv.ParseInt(opt.Value, 10, 32)
-			if err != nil {
-				todo.LogError(fmt.Sprintf("Bad day delay \"%s\", need number", opt.Value))
-				os.Exit(1)
-			}
-
-			err = cmd_manager.SetDelay(int(days))
-			if err != nil {
-				todo.LogError(err.Error())
-				os.Exit(1)
-			}
-		case 'A':
-			records := cmd_manager.GetAuditLog(&task_manager)
-			for _, record := range records {
-				fmt.Println(record.String())
-			}
-		case 'e':
-			cmd_manager.Annotation = opt.Value
-		}
-
-	}
-
-	// if skip_task_read is set then we have done an action that means we should
-	// not print this to stdout due to the chaining rule described above.
-	tasks_all := cmd_manager.GetTasksIfAll(&task_manager)
-	todo.DisplayTasksLong(tasks_all)
+	instant_delete := execute_flag_commands(&task_manager, &cmd_manager, opts)
 
 	if len(opts) > 0 && cmd_manager.SkipTaskCreationPrompt {
 		return
@@ -209,4 +90,127 @@ func readInTask(reader *bufio.Reader) string {
 	}
 	text := string(bytes)
 	return text
+}
+
+func execute_flag_commands(task_manager *todo.TaskManager, cmd_manager *todo.CommandManager, opts []getopt.Option) bool {
+	instant_delete := false
+
+	for _, opt := range opts {
+		switch opt.Option {
+		case 'h':
+			fmt.Printf("%s", help_message)
+			os.Exit(0)
+		case 't':
+			zone, _ := time.Now().Zone()
+			due_date, err := time.Parse(todo.EXPLICIT_TIME_FORMAT, fmt.Sprintf("%v %s", opt.Value, zone))
+			if err == nil {
+				cmd_manager.SetDueDate(due_date)
+			} else {
+				err = cmd_manager.SetDueDateRelative(opt.Value)
+				if err != nil {
+					todo.LogError(err.Error())
+					os.Exit(1)
+				}
+			}
+		case 'l':
+			tasks, err := cmd_manager.GetTasks(task_manager)
+			if err != nil {
+				todo.LogError(err.Error())
+				os.Exit(1)
+			}
+
+			todo.DisplayTasks(tasks)
+		case 'a':
+			cmd_manager.UseAllTasks()
+		case 'D':
+			task_deleted, err := cmd_manager.DeleteTask(task_manager, opt.Value, true)
+			if err != nil {
+				todo.LogError(err.Error())
+				os.Exit(1)
+			}
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				fmt.Printf(task_deleted.Body_content)
+			}
+		case 'd':
+			if opt.Value == "this" {
+				instant_delete = true
+				continue
+			}
+			task_deleted, err := cmd_manager.DeleteTask(task_manager, opt.Value, false)
+			if err != nil {
+				todo.LogError(err.Error())
+				os.Exit(1)
+			}
+			if !isatty.IsTerminal(os.Stdout.Fd()) {
+				fmt.Printf(task_deleted.Body_content)
+			} else {
+				todo.LogSuccess(task_deleted.String())
+			}
+		case 's':
+			err := cmd_manager.SkipTask(task_manager, opt.Value)
+			if err != nil {
+				todo.LogError(err.Error())
+				os.Exit(1)
+			}
+		case 'r':
+			days, err := strconv.ParseInt(opt.Value, 10, 32)
+			if err != nil {
+				err = cmd_manager.SetRepeatHumany(opt.Value)
+			} else {
+				err = cmd_manager.SetRepeat(int(days))
+			}
+			if err != nil {
+				todo.LogError(err.Error())
+				os.Exit(1)
+			}
+		case 'x':
+			err := cmd_manager.DelayTask(task_manager, opt.Value)
+			if err != nil {
+				todo.LogError(err.Error())
+				os.Exit(1)
+			}
+		case 'S':
+			task_manager.StorageDirectory = opt.Value
+		case 'c':
+			category := opt.Value
+			category_path := path.Join(task_manager.StorageDirectory, category)
+			if _, err := os.Stat(category_path); os.IsNotExist(err) {
+				todo.LogError(fmt.Sprintf("Category \"%s\" does not exist", category))
+				os.Exit(1)
+			}
+			fallthrough
+		case 'C':
+			task_manager.StorageDirectory = path.Join(task_manager.StorageDirectory, opt.Value)
+		case 'L':
+			categories := cmd_manager.GetCategories(task_manager)
+			for _, category := range categories {
+				fmt.Println(category)
+			}
+		case 'n':
+			days, err := strconv.ParseInt(opt.Value, 10, 32)
+			if err != nil {
+				todo.LogError(fmt.Sprintf("Bad day delay \"%s\", need number", opt.Value))
+				os.Exit(1)
+			}
+
+			err = cmd_manager.SetDelay(int(days))
+			if err != nil {
+				todo.LogError(err.Error())
+				os.Exit(1)
+			}
+		case 'A':
+			records := cmd_manager.GetAuditLog(task_manager)
+			for _, record := range records {
+				fmt.Println(record.String())
+			}
+		case 'e':
+			cmd_manager.Annotation = opt.Value
+		}
+
+	}
+
+	tasks_all := cmd_manager.GetTasksIfAll(task_manager)
+	todo.DisplayTasksLong(tasks_all)
+
+	return instant_delete
 }
