@@ -56,32 +56,30 @@ func main() {
 
 	instant_delete := execute_flag_commands(&task_manager, &cmd_manager, opts)
 
-	if len(opts) > 0 && cmd_manager.SkipTaskCreationPrompt {
-		goto overdue_auto_removal
-	}
+	if len(opts) == 0 || !cmd_manager.SkipTaskCreationPrompt {
 
-	if input := strings.Join(os.Args[others:], " "); len(os.Args) > 1 && input != "" {
-		task, err = cmd_manager.CreateTask(&task_manager, input)
-	} else {
-		reader := bufio.NewReader(os.Stdin)
-		task, err = cmd_manager.CreateTask(&task_manager, readInTask(reader))
-	}
-	if err != nil {
-		todo.LogError(err.Error())
-		os.Exit(1)
-	}
-
-	if instant_delete {
-		todo.ClearCache()
-		task_deleted, err := cmd_manager.DeleteTask(&task_manager, task.GetFullIndex(), false)
+		if input := strings.Join(os.Args[others:], " "); len(os.Args) > 1 && input != "" {
+			task, err = cmd_manager.CreateTask(&task_manager, input)
+		} else {
+			reader := bufio.NewReader(os.Stdin)
+			task, err = cmd_manager.CreateTask(&task_manager, readInTask(reader))
+		}
 		if err != nil {
 			todo.LogError(err.Error())
 			os.Exit(1)
 		}
-		todo.LogSuccess(task_deleted.String())
+
+		if instant_delete {
+			todo.ClearCache()
+			task_deleted, err := cmd_manager.DeleteTask(&task_manager, task.GetFullIndex(), false)
+			if err != nil {
+				todo.LogError(err.Error())
+				os.Exit(1)
+			}
+			todo.LogSuccess(task_deleted.String())
+		}
 	}
 
-overdue_auto_removal:
 	// XXX At this point we can mess with the state as much as we want
 	// We want all to remove all out of date tasks at this point, so we
 	// the default state.
