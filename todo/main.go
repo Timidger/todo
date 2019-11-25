@@ -90,8 +90,6 @@ func main() {
 			}
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
 				fmt.Printf(task_deleted.Body_content)
-			} else {
-				todo.LogSuccess(task_deleted.String())
 			}
 		case 'd':
 			if opt.Value == "this" {
