@@ -294,7 +294,11 @@ func (cmd_manager *CommandManager) RemoveOverdueTasks(tasks Tasks, task_manager 
 			// TODO Remove once I'm used to this feature
 			LogError(fmt.Sprintf("Auto removing overdue task \"%v\"",
 				task.Body_content))
-			cmd_manager.delete_task_helper(task_manager, task.full_index, true, false)
+			if task.Repeat == nil {
+				cmd_manager.delete_task_helper(task_manager, task.full_index, true, false)
+			} else {
+				cmd_manager.delete_task_helper(task_manager, task.full_index, false, true)
+			}
 		}
 	}
 }
