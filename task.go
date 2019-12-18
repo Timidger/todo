@@ -10,21 +10,17 @@ import (
 )
 
 const CONTENT_LENGTH int = 58
+const DAY_HOURS = time.Hour * 24
 
 const RECORD_TIME_FORMAT = "2006/01/02 MST 15:04:05"
 const EXPLICIT_TIME_FORMAT = "2006/01/02 MST"
 const RELATIVE_TIME_FORMAT = "Monday MST"
 
-/*
- * XXX Yes these names are stupid but they are part of the JSON
- * and thus can't change now
- */
-
 type Task struct {
 	// The "body" content of the task.
-	Body_content string
+	BodyContent string
 	// The first day when this task will appear. Not the actual due date.
-	Due_date time.Time
+	DueDate time.Time
 	// When to repeat this task when it is deleted.
 	// If it is null this task does not repeat.
 	//
@@ -32,25 +28,18 @@ type Task struct {
 	// representation (e.g. Monday or a list of days with , separating).
 	Repeat *string
 	// How many days until this task is actually due.
-	Overdue_days int
-	file_name    string
+	OverdueDays int
+	fileName    string
 	// The minimal index needed to specify this task
 	index string
 	// The full index
-	full_index string
+	fullIndex string
 	// optional category
 	category *string
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func (task Task) GetFullIndex() string {
-	return task.full_index
+	return task.fullIndex
 }
 
 func (task Task) Category() string {
@@ -61,47 +50,48 @@ func (task Task) Category() string {
 }
 
 func (task Task) String() string {
-	category_name := ""
+	categoryName := ""
 	if task.category != nil {
-		category_name = "(" + *task.category + ")"
+		categoryName = "(" + *task.category + ")"
 	}
-	days_left := " "
-	due_date := time.Now().AddDate(0, 0, -task.Overdue_days)
-	if task.DueBefore(due_date) {
-		passed_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days).Truncate(24 * time.Hour)
-		overdue_days := int(math.Floor(time.Now().Sub(passed_due_date).Hours() / 24))
-		if task.DueBefore(time.Now().Truncate(24*time.Hour)) && overdue_days >= 0 {
-			if overdue_days == 1 || overdue_days == 0 {
-				days_left = fmt.Sprintf(" (%d day overdue)", 1)
+	daysLeft := " "
+	dueDate := time.Now().AddDate(0, 0, -task.OverdueDays)
+	if task.DueBefore(dueDate) {
+		passedDueDate := task.DueDate.AddDate(0, 0, task.OverdueDays)
+		passedDueDate = passedDueDate.Truncate(DAY_HOURS)
+		overdueDays := int(math.Floor(time.Now().Sub(passedDueDate).Hours() / 24))
+		if task.DueBefore(time.Now().Truncate(DAY_HOURS)) && overdueDays >= 0 {
+			if overdueDays == 1 || overdueDays == 0 {
+				daysLeft = fmt.Sprintf(" (%d day overdue)", 1)
 			} else {
-				days_left = fmt.Sprintf(" (%d days overdue)", overdue_days)
+				daysLeft = fmt.Sprintf(" (%d days overdue)", overdueDays)
 			}
 		} else {
-			days_left = " (due today)"
+			daysLeft = " (due today)"
 		}
-	} else if task.Overdue_days > 0 {
-		final_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
-		days := int(math.Ceil(final_due_date.Sub(time.Now()).Hours() / 24))
+	} else if task.OverdueDays > 0 {
+		finalDueDate := task.DueDate.AddDate(0, 0, task.OverdueDays)
+		days := int(math.Ceil(finalDueDate.Sub(time.Now()).Hours() / 24))
 		if days == 0 {
-			days_left = " (due today)"
+			daysLeft = " (due today)"
 		} else if days == 1 {
-			days_left = fmt.Sprintf(" (%d day left)", days)
+			daysLeft = fmt.Sprintf(" (%d day left)", days)
 		} else {
-			days_left = fmt.Sprintf(" (%d days left)", days)
+			daysLeft = fmt.Sprintf(" (%d days left)", days)
 		}
 	}
-	trimmed_content := strings.TrimSuffix(task.Body_content, "\n")
+	trimmed_content := strings.TrimSuffix(task.BodyContent, "\n")
 	preamble := task.index + ":"
 	return HardWrapString(trimmed_content,
 		60,
 		preamble,
 		10,
-		fmt.Sprintf("%-15s%s", category_name, days_left),
+		fmt.Sprintf("%-15s%s", categoryName, daysLeft),
 		" ")
 }
 
 /// Creates a new task, without saving it.
-func NewTask(text string, due_date time.Time, repeat *string, overdue_days int) (Task, error) {
+func NewTask(text string, dueDate time.Time, repeat *string, overdueDays int) (Task, error) {
 	if !utf8.ValidString(text) {
 		panic(fmt.Sprintf("Invalid UTF-8 string: %v", text))
 	}
@@ -112,16 +102,16 @@ func NewTask(text string, due_date time.Time, repeat *string, overdue_days int) 
 		return Task{}, errors.New(msg)
 	}
 	var task Task
-	task.Body_content = text
-	task.Due_date = due_date
+	task.BodyContent = text
+	task.DueDate = dueDate
 	task.Repeat = repeat
-	task.Overdue_days = overdue_days
+	task.OverdueDays = overdueDays
 	return task, nil
 }
 
 // Format just the task body
 func (task *Task) FormatTask() string {
-	if task.DueBefore(time.Now().AddDate(0, 0, -task.Overdue_days)) {
+	if task.DueBefore(time.Now().AddDate(0, 0, -task.OverdueDays)) {
 		return RED + task.String() + RESET
 	} else if task.DueAfter(time.Now().AddDate(0, 0, 6)) {
 		return GREY + task.String() + RESET
@@ -131,28 +121,28 @@ func (task *Task) FormatTask() string {
 
 /// Determines if a task is due exactly on this day. Not before, not after.
 func (task *Task) DueOn(date time.Time) bool {
-	if !task.Due_date.Before(date) || task.DueBefore(date) {
-		return false
-	}
-	return true
+	return !(task.DueDate.Before(date) || task.DueBefore(date))
 }
 
 // Determines if a task is due today (or any days before today)
 //
 // NOTE This is NOT a special case of Task.DueOn.
 func (task *Task) DueToday() bool {
-	return is_same_day(task.Due_date, time.Now()) || task.Due_date.Before(time.Now())
+	return is_same_day(task.DueDate, time.Now()) ||
+		task.DueDate.Before(time.Now())
 }
 
 /// Determines if a task is due before today.
 func (task *Task) DueBefore(date time.Time) bool {
-	return task.Due_date.Before(date.Truncate(24 * time.Hour))
+	return task.DueDate.Before(date.Truncate(DAY_HOURS))
 }
 
 func (task *Task) DueAfter(after time.Time) bool {
-	return task.Due_date.After(after)
+	return task.DueDate.After(after)
 }
 
 func is_same_day(a time.Time, b time.Time) bool {
-	return a.Day() == b.Day() && a.Month() == b.Month() && a.Year() == b.Year()
+	return a.Day() == b.Day() &&
+		a.Month() == b.Month() &&
+		a.Year() == b.Year()
 }

@@ -35,9 +35,9 @@ func (tasks Tasks) Less(i, j int) bool {
 	} else if tasks[j].category != nil {
 		return true
 	}
-	task_i_due_date := tasks[i].Due_date.AddDate(0, 0, tasks[i].Overdue_days)
-	task_j_due_date := tasks[j].Due_date.AddDate(0, 0, tasks[j].Overdue_days)
-	return task_i_due_date.Before(task_j_due_date)
+	taskIDueDate := tasks[i].DueDate.AddDate(0, 0, tasks[i].OverdueDays)
+	taskJDueDate := tasks[j].DueDate.AddDate(0, 0, tasks[j].OverdueDays)
+	return taskIDueDate.Before(taskJDueDate)
 }
 
 func (tasks Tasks) Swap(i, j int) {
@@ -52,13 +52,13 @@ condense_tasks:
 	for {
 		for i, _ := range tasks {
 			task := &tasks[i]
-			truncated_name := string(task.index[0:length])
-			if _, exists := hashes[truncated_name]; exists {
+			truncatedName := string(task.index[0:length])
+			if _, exists := hashes[truncatedName]; exists {
 				length++
 				hashes = make(map[string]*Task)
 				continue condense_tasks
 			}
-			hashes[truncated_name] = task
+			hashes[truncatedName] = task
 		}
 		break
 	}
@@ -71,7 +71,7 @@ condense_tasks:
 
 func (tasks Tasks) GetByHash(hash string) *Task {
 	for i, _ := range tasks {
-		if tasks[i].index == hash || tasks[i].full_index[0:len(hash)] == hash {
+		if tasks[i].index == hash || tasks[i].fullIndex[0:len(hash)] == hash {
 			return &tasks[i]
 		}
 	}
@@ -84,116 +84,118 @@ type TaskManager struct {
 
 // Saves a new task to disk
 func (manager *TaskManager) SaveTask(task *Task) error {
-	storage_dir := manager.StorageDirectory
-	if task.category != nil && path.Base(storage_dir) != *task.category {
-		storage_dir = path.Join(storage_dir, *task.category)
+	storageDir := manager.StorageDirectory
+	if task.category != nil && path.Base(storageDir) != *task.category {
+		storageDir = path.Join(storageDir, *task.category)
 	}
-	create_dir(storage_dir)
+	createDir(storageDir)
 	sha := sha1.New()
-	sha.Write([]byte(task.Body_content))
+	sha.Write([]byte(task.BodyContent))
 	// Also use the storage directory name as part of the hash,
 	// this is to avoid collisions across categories.
-	sha.Write([]byte(path.Base(storage_dir)))
+	sha.Write([]byte(path.Base(storageDir)))
 	hash := fmt.Sprintf("%x", sha.Sum(nil))
-	task.full_index = hash
-	save_path := path.Join(storage_dir, hash+".todo")
-	if _, err := os.Stat(save_path); !os.IsNotExist(err) {
+	task.fullIndex = hash
+	savePath := path.Join(storageDir, hash+".todo")
+	if _, err := os.Stat(savePath); !os.IsNotExist(err) {
 		return errors.New("You have already made that a task")
 	}
-	new, err := os.Create(save_path)
+	new, err := os.Create(savePath)
 	if err != nil {
 		panic(err)
 	}
 	defer new.Close()
 
-	task_json, err := json.Marshal(task)
+	taskJson, err := json.Marshal(task)
 	if err != nil {
 		return err
 	}
 
-	if _, err := new.Write(task_json); err != nil {
+	if _, err := new.Write(taskJson); err != nil {
 		return err
 	}
 	return nil
 }
 
 /// Deletes a task by index
-func (manager *TaskManager) DeleteTask(tasks Tasks, task_index string) *Task {
-	to_delete_index := -1
+func (manager *TaskManager) DeleteTask(tasks Tasks, taskIndex string) *Task {
+	toDeleteIndex := -1
 	for i, task := range tasks {
-		if task_index == task.index {
-			to_delete_index = i
+		if taskIndex == task.index {
+			toDeleteIndex = i
 			break
 		}
 	}
 
 	// If exact match couldn't be found see if there's a unique match using
 	// the full length.
-	if to_delete_index == -1 {
+	if toDeleteIndex == -1 {
 		for i, task := range tasks {
-			if strings.HasPrefix(task.full_index, task_index) {
-				if to_delete_index != -1 {
+			if strings.HasPrefix(task.fullIndex, taskIndex) {
+				if toDeleteIndex != -1 {
 					return nil
 				}
-				to_delete_index = i
+				toDeleteIndex = i
 			}
 		}
 	}
-	if to_delete_index == -1 {
+	if toDeleteIndex == -1 {
 		return nil
 	}
 
-	if err := os.Remove(tasks[to_delete_index].file_name); err != nil {
+	if err := os.Remove(tasks[toDeleteIndex].fileName); err != nil {
 		panic(err)
 	}
-	task := tasks[to_delete_index]
+	task := tasks[toDeleteIndex]
 	if task.Repeat == nil {
-		tasks = append(tasks[:to_delete_index], tasks[to_delete_index+1:]...)
+		tasks = append(tasks[:toDeleteIndex], tasks[toDeleteIndex+1:]...)
 	}
 	return &task
 }
 
 func (manager *TaskManager) GetCategories() Categories {
-	create_dir(manager.StorageDirectory)
+	createDir(manager.StorageDirectory)
 	root := manager.StorageDirectory
 	var categories Categories
-	max_depth := strings.Count(root, "/") + 1
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		depth := strings.Count(path, "/")
-		if path == root || depth > max_depth {
+	maxDepth := strings.Count(root, "/") + 1
+	err := filepath.Walk(root,
+		func(path string, info os.FileInfo, err error) error {
+			depth := strings.Count(path, "/")
+			if path == root || depth > maxDepth {
+				return nil
+			}
+			if info.IsDir() {
+				subDirFiles, err := ioutil.ReadDir(path)
+				if err != nil {
+					return err
+				}
+				count := 0
+				for _, file := range subDirFiles {
+					var task Task
+					name := file.Name()
+					if name == "audit_log" {
+						continue
+					}
+					path := strings.Join([]string{path, name}, "/")
+					bytes, err := ioutil.ReadFile(path)
+					if err != nil {
+						continue
+					}
+					err = json.Unmarshal(bytes, &task)
+					if err != nil {
+						continue
+					}
+					if task.DueToday() {
+						count += 1
+					}
+				}
+				var category Category
+				category.Name = info.Name()
+				category.Tasks = count
+				categories = append(categories, category)
+			}
 			return nil
-		}
-		if info.IsDir() {
-			sub_dir_files, err := ioutil.ReadDir(path)
-			if err != nil {
-				return err
-			}
-			count := 0
-			for _, file := range sub_dir_files {
-				var task Task
-				name := file.Name()
-				if name == "audit_log" {
-					continue
-				}
-				bytes, err := ioutil.ReadFile(strings.Join([]string{path, name}, "/"))
-				if err != nil {
-					continue
-				}
-				err = json.Unmarshal(bytes, &task)
-				if err != nil {
-					continue
-				}
-				if task.DueToday() {
-					count += 1
-				}
-			}
-			var category Category
-			category.Name = info.Name()
-			category.Tasks = count
-			categories = append(categories, category)
-		}
-		return nil
-	})
+		})
 	if err != nil {
 		panic(err)
 	}
@@ -201,42 +203,43 @@ func (manager *TaskManager) GetCategories() Categories {
 	return categories
 }
 
-func (manager *TaskManager) get_tasks_helper() Tasks {
-	create_dir(manager.StorageDirectory)
+func (manager *TaskManager) getTasksHelper() Tasks {
+	createDir(manager.StorageDirectory)
 	root := manager.StorageDirectory
 	var tasks Tasks
-	max_depth := strings.Count(root, "/") + 1
-	err := filepath.Walk(root, func(path string, info os.FileInfo, err error) error {
-		// Nested directories are ignored -- this is to support categories
-		// as simply "other" todo storages.
-		depth := strings.Count(path, "/")
-		if path == root || info.IsDir() || depth > max_depth {
-			return nil
-		}
-		var task Task
-		task.file_name = path
+	maxDepth := strings.Count(root, "/") + 1
+	err := filepath.Walk(root,
+		func(path string, info os.FileInfo, err error) error {
+			// Nested directories are ignored -- this is to support categories
+			// as simply "other" todo storages.
+			depth := strings.Count(path, "/")
+			if path == root || info.IsDir() || depth > maxDepth {
+				return nil
+			}
+			var task Task
+			task.fileName = path
 
-		_, file_name := filepath.Split(path)
-		split := strings.Split(file_name, ".")
-		if len(split) < 2 || split[1] != "todo" {
+			_, fileName := filepath.Split(path)
+			split := strings.Split(fileName, ".")
+			if len(split) < 2 || split[1] != "todo" {
+				return nil
+			}
+			fileName = split[0]
+			task.index = fileName
+			task.fullIndex = fileName
+			bytes, err := ioutil.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			err = json.Unmarshal(bytes, &task)
+			if err != nil {
+				return err
+			}
+			task.index = fileName
+			task.fullIndex = fileName
+			tasks = append(tasks, task)
 			return nil
-		}
-		file_name = split[0]
-		task.index = file_name
-		task.full_index = file_name
-		bytes, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		err = json.Unmarshal(bytes, &task)
-		if err != nil {
-			return err
-		}
-		task.index = file_name
-		task.full_index = file_name
-		tasks = append(tasks, task)
-		return nil
-	})
+		})
 	if err != nil {
 		panic(err)
 	}
@@ -244,27 +247,27 @@ func (manager *TaskManager) get_tasks_helper() Tasks {
 }
 
 func (manager *TaskManager) GetTasks() Tasks {
-	tasks := manager.get_tasks_helper()
+	tasks := manager.getTasksHelper()
 	categories := manager.GetCategories()
-	original_directory := manager.StorageDirectory
+	originalDirectory := manager.StorageDirectory
 	for _, category := range categories {
-		manager.StorageDirectory = path.Join(original_directory, category.Name)
-		category_name := category.Name
-		new_tasks := manager.get_tasks_helper()
-		for i, _ := range new_tasks {
-			new_tasks[i].category = &category_name
+		manager.StorageDirectory = path.Join(originalDirectory, category.Name)
+		categoryName := category.Name
+		newTasks := manager.getTasksHelper()
+		for i, _ := range newTasks {
+			newTasks[i].category = &categoryName
 		}
-		tasks = append(tasks, new_tasks...)
+		tasks = append(tasks, newTasks...)
 	}
-	manager.StorageDirectory = original_directory
+	manager.StorageDirectory = originalDirectory
 	tasks = tasks.Condense()
 	sort.Sort(tasks)
 	return tasks
 }
 
-func (tasks *Tasks) RemoveFirst(to_remove Task) {
+func (tasks *Tasks) RemoveFirst(toRemove Task) {
 	for i, task := range *tasks {
-		if task == to_remove {
+		if task == toRemove {
 			*tasks = append((*tasks)[:i], (*tasks)[i+1:]...)
 			return
 		}
@@ -294,31 +297,32 @@ func (tasks_ Tasks) FilterTasksDueBeforeToday() []Task {
 }
 
 func (manager *TaskManager) AuditLog(task Task, done_date time.Time, annotation string) {
-	create_dir(manager.StorageDirectory)
-	audit_log_path := path.Join(manager.StorageDirectory, AUDIT_LOG)
-	var audit_log_file *os.File
-	if _, err := os.Stat(audit_log_path); os.IsNotExist(err) {
-		audit_log_file, err = os.OpenFile(audit_log_path, os.O_APPEND|os.O_WRONLY|os.O_CREATE, 0600)
+	createDir(manager.StorageDirectory)
+	auditLogPath := path.Join(manager.StorageDirectory, AUDIT_LOG)
+	var auditLogFile *os.File
+	if _, err := os.Stat(auditLogPath); os.IsNotExist(err) {
+		perms := os.O_APPEND | os.O_WRONLY | os.O_CREATE
+		auditLogFile, err = os.OpenFile(auditLogPath, perms, 0600)
 		if err != nil {
 			panic(err)
 		}
-		audit_log_file.WriteString("#" + AUDIT_FIELDS)
+		auditLogFile.WriteString("#" + AUDIT_FIELDS)
 	} else {
-		audit_log_file, err = os.OpenFile(audit_log_path, os.O_APPEND|os.O_WRONLY, 0600)
+		auditLogFile, err = os.OpenFile(auditLogPath, os.O_APPEND|os.O_WRONLY, 0600)
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	defer audit_log_file.Close()
+	defer auditLogFile.Close()
 
-	audit_log := csv.NewWriter(audit_log_file)
+	audit_log := csv.NewWriter(auditLogFile)
 
 	var record Record
-	record.Body_content = task.Body_content
-	record.Due_date = task.Due_date
+	record.BodyContent = task.BodyContent
+	record.DueDate = task.DueDate
 	record.Repeat = task.Repeat
-	record.Overdue_days = task.Overdue_days
+	record.OverdueDays = task.OverdueDays
 	record.DateCompleted = done_date
 	record.Annotation = annotation
 
@@ -329,33 +333,33 @@ func (manager *TaskManager) AuditLog(task Task, done_date time.Time, annotation 
 }
 
 func (manager *TaskManager) AuditRecords() Records {
-	create_dir(manager.StorageDirectory)
+	createDir(manager.StorageDirectory)
 	categories := manager.GetCategories()
 	var records Records
 
 	// Append nil category to get the root audit log
 	for _, category := range append(categories, Category{}) {
-		audit_log_path := path.Join(manager.StorageDirectory, category.Name, AUDIT_LOG)
-		if _, err := os.Stat(audit_log_path); os.IsNotExist(err) {
+		auditLogPath := path.Join(manager.StorageDirectory, category.Name, AUDIT_LOG)
+		if _, err := os.Stat(auditLogPath); os.IsNotExist(err) {
 			continue
 		}
 
-		audit_log_file, err := os.OpenFile(audit_log_path, os.O_RDONLY, 0600)
+		auditLogFile, err := os.OpenFile(auditLogPath, os.O_RDONLY, 0600)
 		if err != nil {
 			panic(err)
 		}
-		defer audit_log_file.Close()
+		defer auditLogFile.Close()
 
-		audit_log := csv.NewReader(audit_log_file)
+		audit_log := csv.NewReader(auditLogFile)
 		audit_log.FieldsPerRecord = -1
 		audit_log.Comment = '#'
 
-		read_records, err := audit_log.ReadAll()
+		readRecords, err := audit_log.ReadAll()
 		if err != nil {
 			panic(err)
 		}
-		for _, read_record := range read_records {
-			record := Unmarshal(read_record)
+		for _, readRecord := range readRecords {
+			record := Unmarshal(readRecord)
 			record.Category = category.Name
 			records = append(records, record)
 		}
@@ -367,9 +371,9 @@ func (manager *TaskManager) AuditRecords() Records {
 }
 
 // Creates a directory if it does not exist
-func create_dir(directory_path string) {
-	if _, err := os.Stat(directory_path); os.IsNotExist(err) {
-		if err = os.Mkdir(directory_path, 0700); err != nil {
+func createDir(directoryPath string) {
+	if _, err := os.Stat(directoryPath); os.IsNotExist(err) {
+		if err = os.Mkdir(directoryPath, 0700); err != nil {
 			panic(err)
 		}
 	} else if err != nil {

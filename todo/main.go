@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-const help_message = "Usage of todo:\n" +
+const HELP_MESSAGE = "Usage of todo:\n" +
 	"  -h              Show this help message\n" +
 	"  -l              List the things to do today by category first and due date\n" +
 	"  -a              List all the things to do, regardless of due date, from soonest to latest\n" +
@@ -43,59 +43,59 @@ const help_message = "Usage of todo:\n" +
 func main() {
 	opts, others, err := getopt.Getopts(os.Args, "ALhalt:d:x:D:S:C:c:r:n:s:e:")
 	if err != nil {
-		fmt.Printf("%s", help_message)
+		fmt.Printf("%s", HELP_MESSAGE)
 		return
 	}
 	var task *todo.Task
-	var task_manager todo.TaskManager
-	task_manager.StorageDirectory = path.Join(os.Getenv("HOME"), ".todo/")
+	var taskManager todo.TaskManager
+	taskManager.StorageDirectory = path.Join(os.Getenv("HOME"), ".todo/")
 
-	var cmd_manager todo.CommandManager
-	cmd_manager.DueDate = time.Now()
-	cmd_manager.Listing = todo.LISTING_DAY
+	var cmdManager todo.CommandManager
+	cmdManager.DueDate = time.Now()
+	cmdManager.Listing = todo.LISTING_DAY
 
-	instant_delete := execute_flag_commands(&task_manager, &cmd_manager, opts)
+	instantDelete := execute_flag_commands(&taskManager, &cmdManager, opts)
 
-	if len(opts) == 0 || !cmd_manager.SkipTaskCreationPrompt {
-
-		if input := strings.Join(os.Args[others:], " "); len(os.Args) > 1 && input != "" {
-			task, err = cmd_manager.CreateTask(&task_manager, input)
+	if len(opts) == 0 || !cmdManager.SkipTaskCreationPrompt {
+		input := strings.Join(os.Args[others:], " ")
+		if len(os.Args) > 1 && input != "" {
+			task, err = cmdManager.CreateTask(&taskManager, input)
 		} else {
 			reader := bufio.NewReader(os.Stdin)
-			task, err = cmd_manager.CreateTask(&task_manager, readInTask(reader))
+			task, err = cmdManager.CreateTask(&taskManager, readInTask(reader))
 		}
 		if err != nil {
 			todo.LogError(err.Error())
 			os.Exit(1)
 		}
 
-		if instant_delete {
+		if instantDelete {
 			todo.ClearCache()
-			task_deleted, err := cmd_manager.DeleteTask(&task_manager, task.GetFullIndex(), false)
+			taskDeleted, err := cmdManager.DeleteTask(&taskManager, task.GetFullIndex(), false)
 			if err != nil {
 				todo.LogError(err.Error())
 				os.Exit(1)
 			}
-			todo.LogSuccess(task_deleted.String())
+			todo.LogSuccess(taskDeleted.String())
 		}
 	}
 
 	// XXX At this point we can mess with the state as much as we want
 	// We want all to remove all out of date tasks at this point, so we
 	// the default state.
-	cmd_manager = todo.CommandManager{}
-	cmd_manager.DueDate = time.Now()
-	cmd_manager.Listing = todo.LISTING_DAY
+	cmdManager = todo.CommandManager{}
+	cmdManager.DueDate = time.Now()
+	cmdManager.Listing = todo.LISTING_DAY
 
-	task_manager = todo.TaskManager{}
-	task_manager.StorageDirectory = path.Join(os.Getenv("HOME"), ".todo/")
+	taskManager = todo.TaskManager{}
+	taskManager.StorageDirectory = path.Join(os.Getenv("HOME"), ".todo/")
 
-	tasks, err := cmd_manager.GetTasks(&task_manager)
+	tasks, err := cmdManager.GetTasks(&taskManager)
 	if err != nil {
 		todo.LogError(err.Error())
 		os.Exit(1)
 	}
-	cmd_manager.RemoveOverdueTasks(tasks, &task_manager)
+	cmdManager.RemoveOverdueTasks(tasks, &taskManager)
 }
 
 // Read a task in from a reader and pass it off to add_task.
@@ -108,29 +108,30 @@ func readInTask(reader *bufio.Reader) string {
 	return text
 }
 
-func execute_flag_commands(task_manager *todo.TaskManager,
-	cmd_manager *todo.CommandManager, opts []getopt.Option) bool {
-	instant_delete := false
+func execute_flag_commands(taskManager *todo.TaskManager,
+	cmdManager *todo.CommandManager, opts []getopt.Option) bool {
+	instantDelete := false
 
 	for _, opt := range opts {
 		switch opt.Option {
 		case 'h':
-			fmt.Printf("%s", help_message)
+			fmt.Printf("%s", HELP_MESSAGE)
 			os.Exit(0)
 		case 't':
 			zone, _ := time.Now().Zone()
-			due_date, err := time.Parse(todo.EXPLICIT_TIME_FORMAT, fmt.Sprintf("%v %s", opt.Value, zone))
+			dueDate, err := time.Parse(todo.EXPLICIT_TIME_FORMAT,
+				fmt.Sprintf("%v %s", opt.Value, zone))
 			if err == nil {
-				cmd_manager.SetDueDate(due_date)
+				cmdManager.SetDueDate(dueDate)
 			} else {
-				err = cmd_manager.SetDueDateRelative(opt.Value)
+				err = cmdManager.SetDueDateRelative(opt.Value)
 				if err != nil {
 					todo.LogError(err.Error())
 					os.Exit(1)
 				}
 			}
 		case 'l':
-			tasks, err := cmd_manager.GetTasks(task_manager)
+			tasks, err := cmdManager.GetTasks(taskManager)
 			if err != nil {
 				todo.LogError(err.Error())
 				os.Exit(1)
@@ -138,33 +139,33 @@ func execute_flag_commands(task_manager *todo.TaskManager,
 
 			todo.DisplayTasks(tasks)
 		case 'a':
-			cmd_manager.UseAllTasks()
+			cmdManager.UseAllTasks()
 		case 'D':
-			task_deleted, err := cmd_manager.DeleteTask(task_manager, opt.Value, true)
+			taskDeleted, err := cmdManager.DeleteTask(taskManager, opt.Value, true)
 			if err != nil {
 				todo.LogError(err.Error())
 				os.Exit(1)
 			}
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				fmt.Printf(task_deleted.Body_content)
+				fmt.Printf(taskDeleted.BodyContent)
 			}
 		case 'd':
 			if opt.Value == "this" {
-				instant_delete = true
+				instantDelete = true
 				continue
 			}
-			task_deleted, err := cmd_manager.DeleteTask(task_manager, opt.Value, false)
+			taskDeleted, err := cmdManager.DeleteTask(taskManager, opt.Value, false)
 			if err != nil {
 				todo.LogError(err.Error())
 				os.Exit(1)
 			}
 			if !isatty.IsTerminal(os.Stdout.Fd()) {
-				fmt.Printf(task_deleted.Body_content)
+				fmt.Printf(taskDeleted.BodyContent)
 			} else {
-				todo.LogSuccess(task_deleted.String())
+				todo.LogSuccess(taskDeleted.String())
 			}
 		case 's':
-			err := cmd_manager.SkipTask(task_manager, opt.Value)
+			err := cmdManager.SkipTask(taskManager, opt.Value)
 			if err != nil {
 				todo.LogError(err.Error())
 				os.Exit(1)
@@ -172,34 +173,34 @@ func execute_flag_commands(task_manager *todo.TaskManager,
 		case 'r':
 			days, err := strconv.ParseInt(opt.Value, 10, 32)
 			if err != nil {
-				err = cmd_manager.SetRepeatHumany(opt.Value)
+				err = cmdManager.SetRepeatHumany(opt.Value)
 			} else {
-				err = cmd_manager.SetRepeat(int(days))
+				err = cmdManager.SetRepeat(int(days))
 			}
 			if err != nil {
 				todo.LogError(err.Error())
 				os.Exit(1)
 			}
 		case 'x':
-			err := cmd_manager.DelayTask(task_manager, opt.Value)
+			err := cmdManager.DelayTask(taskManager, opt.Value)
 			if err != nil {
 				todo.LogError(err.Error())
 				os.Exit(1)
 			}
 		case 'S':
-			task_manager.StorageDirectory = opt.Value
+			taskManager.StorageDirectory = opt.Value
 		case 'c':
 			category := opt.Value
-			category_path := path.Join(task_manager.StorageDirectory, category)
-			if _, err := os.Stat(category_path); os.IsNotExist(err) {
+			categoryPath := path.Join(taskManager.StorageDirectory, category)
+			if _, err := os.Stat(categoryPath); os.IsNotExist(err) {
 				todo.LogError(fmt.Sprintf("Category \"%s\" does not exist", category))
 				os.Exit(1)
 			}
 			fallthrough
 		case 'C':
-			task_manager.StorageDirectory = path.Join(task_manager.StorageDirectory, opt.Value)
+			taskManager.StorageDirectory = path.Join(taskManager.StorageDirectory, opt.Value)
 		case 'L':
-			categories := cmd_manager.GetCategories(task_manager)
+			categories := cmdManager.GetCategories(taskManager)
 			for _, category := range categories {
 				fmt.Println(category)
 			}
@@ -210,24 +211,24 @@ func execute_flag_commands(task_manager *todo.TaskManager,
 				os.Exit(1)
 			}
 
-			err = cmd_manager.SetDelay(int(days))
+			err = cmdManager.SetDelay(int(days))
 			if err != nil {
 				todo.LogError(err.Error())
 				os.Exit(1)
 			}
 		case 'A':
-			records := cmd_manager.GetAuditLog(task_manager)
+			records := cmdManager.GetAuditLog(taskManager)
 			for _, record := range records {
 				fmt.Println(record.String())
 			}
 		case 'e':
-			cmd_manager.Annotation = opt.Value
+			cmdManager.Annotation = opt.Value
 		}
 
 	}
 
-	tasks_all := cmd_manager.GetTasksIfAll(task_manager)
-	todo.DisplayTasksLong(tasks_all)
+	tasksAll := cmdManager.GetTasksIfAll(taskManager)
+	todo.DisplayTasksLong(tasksAll)
 
-	return instant_delete
+	return instantDelete
 }

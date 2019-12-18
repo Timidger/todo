@@ -10,7 +10,7 @@ import (
 
 const AUDIT_LOG = "audit_log/"
 const AUDIT_MINIMUM_FIELDS = 6 // XXX don't need "Notes"
-const AUDIT_FIELDS = "Body_content, Due_date, Repeat, Overdue_days," +
+const AUDIT_FIELDS = "BodyContent, DueDate, Repeat, OverdueDays," +
 	"Category, DateCompleted, Notes" +
 	"\n"
 
@@ -30,13 +30,11 @@ func (records Records) Swap(i, j int) {
 	records[i], records[j] = records[j], records[i]
 }
 
-// NOTE This is an append-only struct.
-// If new fields are added, put them at the end and update ALL functions.
 type Record struct {
-	Body_content string
-	Due_date     time.Time
-	Repeat       *string
-	Overdue_days int
+	BodyContent string
+	DueDate     time.Time
+	Repeat      *string
+	OverdueDays int
 	// This is actually determined at load time again,
 	// since audit logs store the category by virtue of being in
 	// separate directories.
@@ -46,24 +44,24 @@ type Record struct {
 }
 
 func (record Record) Marshal() []string {
-	body_content := record.Body_content
-	due_date := record.Due_date.Format(EXPLICIT_TIME_FORMAT)
+	bodyContent := record.BodyContent
+	dueDate := record.DueDate.Format(EXPLICIT_TIME_FORMAT)
 	repeat := ""
 	if record.Repeat != nil {
 		repeat = *record.Repeat
 	}
-	overdue_days := strconv.Itoa(record.Overdue_days)
+	overdueDays := strconv.Itoa(record.OverdueDays)
 	// Category determined at load time, from directory of audit_log
 	category := ""
-	date_completed := record.DateCompleted.Format(RECORD_TIME_FORMAT)
+	dateCompleted := record.DateCompleted.Format(RECORD_TIME_FORMAT)
 	annotation := record.Annotation
 	return []string{
-		body_content,
-		due_date,
+		bodyContent,
+		dueDate,
 		repeat,
-		overdue_days,
+		overdueDays,
 		category,
-		date_completed,
+		dateCompleted,
 		annotation,
 	}
 }
@@ -71,22 +69,22 @@ func (record Record) Marshal() []string {
 func (record Record) String() string {
 	completed := record.DateCompleted.Format(RECORD_TIME_FORMAT)
 	overdue := ""
-	date_due := record.Due_date.AddDate(0, 0, record.Overdue_days)
-	if date_due.Before(record.DateCompleted) {
-		overdue_days := int(math.Floor(record.DateCompleted.Sub(date_due).Hours() / 24))
-		if overdue_days != 0 {
-			overdue = fmt.Sprintf(RED+" (overdue %d days)"+RESET, overdue_days)
+	dateDue := record.DueDate.AddDate(0, 0, record.OverdueDays)
+	if dateDue.Before(record.DateCompleted) {
+		overdueDays := int(math.Floor(record.DateCompleted.Sub(dateDue).Hours() / 24))
+		if overdueDays != 0 {
+			overdue = fmt.Sprintf(RED+" (overdue %d days)"+RESET, overdueDays)
 		}
 	}
 
-	category_name := ""
+	categoryName := ""
 	if record.Category != "" {
-		category_name = "(" + record.Category + ")"
+		categoryName = "(" + record.Category + ")"
 	}
 
-	trimmed_content := strings.TrimSuffix(record.Body_content, "\n")
-	postamble := fmt.Sprintf("%-15s%s", category_name, overdue)
-	audit_entry := HardWrapString(trimmed_content, 60,
+	trimmedContent := strings.TrimSuffix(record.BodyContent, "\n")
+	postamble := fmt.Sprintf("%-15s%s", categoryName, overdue)
+	audit_entry := HardWrapString(trimmedContent, 60,
 		completed, len(completed)+2, postamble, " ")
 	if record.Annotation != "" {
 		if len(record.Annotation) >= 60 {
@@ -104,13 +102,13 @@ func Unmarshal(fields []string) Record {
 		panic(fmt.Sprintf("actual %d != expected at least %d", len(fields), AUDIT_MINIMUM_FIELDS))
 	}
 	var record Record
-	record.Body_content = fields[0]
-	record.Due_date, _ = time.Parse(EXPLICIT_TIME_FORMAT, fields[1])
+	record.BodyContent = fields[0]
+	record.DueDate, _ = time.Parse(EXPLICIT_TIME_FORMAT, fields[1])
 	if fields[2] != "" {
 		record.Repeat = &fields[2]
 	}
-	overdue_days, _ := strconv.ParseInt(fields[3], 10, 32)
-	record.Overdue_days = int(overdue_days)
+	overdueDays, _ := strconv.ParseInt(fields[3], 10, 32)
+	record.OverdueDays = int(overdueDays)
 	record.Category = fields[4]
 	record.DateCompleted, _ = time.Parse(RECORD_TIME_FORMAT, fields[5])
 

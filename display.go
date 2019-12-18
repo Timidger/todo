@@ -39,19 +39,19 @@ func DisplayTasksLong(tasks Tasks) {
 		return
 	}
 	// NOTE This is the first day because it's assumed to be sorted.
-	cur_day := tasks[0].Due_date
+	curDay := tasks[0].DueDate
 	printed := false
 	for _, task := range tasks {
-		if !printed || !is_same_day(cur_day, task.Due_date) {
+		if !printed || !is_same_day(curDay, task.DueDate) {
 			printed = true
-			cur_day = task.Due_date
-			day_header := fmt.Sprintf("%-90v%v\n",
-				cur_day.Format("Monday")+":",
-				cur_day.Format(EXPLICIT_TIME_FORMAT))
+			curDay = task.DueDate
+			dayHeader := fmt.Sprintf("%-90v%v\n",
+				curDay.Format("Monday")+":",
+				curDay.Format(EXPLICIT_TIME_FORMAT))
 			if task.DueAfter(time.Now().AddDate(0, 0, 6)) {
-				day_header = GREY + day_header + RESET
+				dayHeader = GREY + dayHeader + RESET
 			}
-			fmt.Printf(day_header)
+			fmt.Printf(dayHeader)
 		}
 		fmt.Println(task.FormatTask())
 	}
@@ -62,21 +62,21 @@ func DisplayTasksLong(tasks Tasks) {
 ///
 /// Each paragraph will be indented at least preamble_length amount.
 /// Pre-amble will be on the first line only.
-func HardWrapString(paragraph string, max_length int,
-	preamble_part string, preamble_length int,
-	postamble string, every_line_preamble string) string {
+func HardWrapString(paragraph string, maxLength int,
+	preamblePart string, preambleLength int,
+	postamble string, everyLinePreamble string) string {
 	append_header := func(body string) string {
 		return fmt.Sprintf("%-*s%-*v%s",
-			preamble_length,
-			preamble_part,
-			max_length,
+			preambleLength,
+			preamblePart,
+			maxLength,
 			body,
 			postamble)
 	}
 
-	preamble := fmt.Sprintf("%*s", preamble_length, every_line_preamble)
+	preamble := fmt.Sprintf("%*s", preambleLength, everyLinePreamble)
 
-	if len(paragraph) < max_length {
+	if len(paragraph) < maxLength {
 		return append_header(paragraph)
 	}
 

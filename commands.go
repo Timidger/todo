@@ -48,46 +48,46 @@ type CommandManager struct {
 }
 
 // -t
-func (cmd_manager *CommandManager) SetDueDate(new_due_date time.Time) {
-	cmd_manager.DueDate = new_due_date
-	cmd_manager.TimeSet = true
+func (cmdManager *CommandManager) SetDueDate(newDueDate time.Time) {
+	cmdManager.DueDate = newDueDate
+	cmdManager.TimeSet = true
 }
 
-func get_humany_next_delay(days_string string) (time.Time, error) {
+func getHumanyNextDelay(daysString string) (time.Time, error) {
 	// Must be human-y
 	today := time.Now()
-	days := strings.Split(days_string, ",")
+	days := strings.Split(daysString, ",")
 	if len(days) == 0 {
 		return today, errors.New("Empty repeat is not allowed")
 	}
 	/* We want the lowest index day _after_ today's
 	where Sunday = 0, Saturday = 6
 	If there is no number after today then just the smallest one. */
-	today_index := int(today.Weekday())
-	day_indices := make([]int, len(days))
+	todayIndex := int(today.Weekday())
+	dayIndices := make([]int, len(days))
 	for index, day := range days {
 		var err error
-		day_indices[index], err = day_to_index(day)
+		dayIndices[index], err = dayToIndex(day)
 		if err != nil {
 			return today, err
 		}
 	}
-	index_of_lowest := 0
-	for index, day_index := range day_indices[1:] {
-		if day_indices[index_of_lowest] < today_index && day_index < today_index {
-			index_of_lowest = index
+	indexOfLowest := 0
+	for index, dayIndex := range dayIndices[1:] {
+		if dayIndices[indexOfLowest] < todayIndex && dayIndex < todayIndex {
+			indexOfLowest = index
 		}
-		if day_index > today_index && day_index < day_indices[index_of_lowest] {
-			index_of_lowest = index
+		if dayIndex > todayIndex && dayIndex < dayIndices[indexOfLowest] {
+			indexOfLowest = index
 		}
 	}
-	if index_of_lowest == today_index {
+	if indexOfLowest == todayIndex {
 		return today.AddDate(0, 0, 7), nil
 	}
-	return humany_time(days[index_of_lowest])
+	return humanyTime(days[indexOfLowest])
 }
 
-func day_to_index(day string) (int, error) {
+func dayToIndex(day string) (int, error) {
 	switch strings.Title(day) {
 	case "Sunday":
 		return 0, nil
@@ -108,27 +108,27 @@ func day_to_index(day string) (int, error) {
 	}
 }
 
-func humany_time(day string) (time.Time, error) {
+func humanyTime(day string) (time.Time, error) {
 	today := time.Now()
-	relative_day := 0
-	cur_weekday := int(today.Weekday())
+	relativeDay := 0
+	curWeekday := int(today.Weekday())
 	switch strings.Title(day) {
 	case "Sunday":
-		relative_day = 0
+		relativeDay = 0
 	case "Monday":
-		relative_day = 1
+		relativeDay = 1
 	case "Tuesday":
-		relative_day = 2
+		relativeDay = 2
 	case "Wednesday":
-		relative_day = 3
+		relativeDay = 3
 	case "Thursday":
-		relative_day = 4
+		relativeDay = 4
 	case "Friday":
-		relative_day = 5
+		relativeDay = 5
 	case "Saturday":
-		relative_day = 6
+		relativeDay = 6
 	case "Tomorrow":
-		relative_day = (cur_weekday + 1) % 7
+		relativeDay = (curWeekday + 1) % 7
 	case "Today":
 		return today, nil
 	case "Yesterday":
@@ -136,76 +136,76 @@ func humany_time(day string) (time.Time, error) {
 	default:
 		return today, errors.New(fmt.Sprintf("Invalid human-y day %s", day))
 	}
-	if cur_weekday < relative_day {
-		return today.AddDate(0, 0, int(relative_day-cur_weekday)), nil
+	if curWeekday < relativeDay {
+		return today.AddDate(0, 0, int(relativeDay-curWeekday)), nil
 	} else {
-		return today.AddDate(0, 0, 7-(cur_weekday-relative_day)), nil
+		return today.AddDate(0, 0, 7-(curWeekday-relativeDay)), nil
 	}
 }
 
 // -t
-func (cmd_manager *CommandManager) SetDueDateRelative(new_due_date string) error {
-	cmd_manager.TimeSet = true
-	human_due_date, err := humany_time(new_due_date)
+func (cmdManager *CommandManager) SetDueDateRelative(newDueDate string) error {
+	cmdManager.TimeSet = true
+	humanDueDate, err := humanyTime(newDueDate)
 	if err != nil {
-		cmd_manager.DueDate = human_due_date
+		cmdManager.DueDate = humanDueDate
 		return nil
 	}
 	// Attempt to use date as a fallback, using ISO-8601 format
-	var due_date time.Time
-	out, err := exec.Command("/usr/bin/date", "--iso-8601", "-d", new_due_date).Output()
+	var dueDate time.Time
+	out, err := exec.Command("/usr/bin/date", "--iso-8601", "-d", newDueDate).Output()
 	if err != nil {
 		return errors.New(fmt.Sprintf("/usr/bin/date failed: %v", err))
 	}
-	new_due_date = strings.ReplaceAll(strings.TrimSpace(string(out)), "-", "/")
+	newDueDate = strings.ReplaceAll(strings.TrimSpace(string(out)), "-", "/")
 	zone, _ := time.Now().Zone()
-	due_date, err = time.Parse(EXPLICIT_TIME_FORMAT, fmt.Sprintf("%s %s", new_due_date, zone))
+	dueDate, err = time.Parse(EXPLICIT_TIME_FORMAT, fmt.Sprintf("%s %s", newDueDate, zone))
 	if err != nil {
-		return errors.New(fmt.Sprintf("Bad date: %s", new_due_date))
+		return errors.New(fmt.Sprintf("Bad date: %s", newDueDate))
 	}
-	cmd_manager.DueDate = due_date
+	cmdManager.DueDate = dueDate
 	return nil
 }
 
 // -l
-func (cmd_manager *CommandManager) GetTasks(task_manager *TaskManager) (Tasks, error) {
-	all_tasks := GetTasks(task_manager)
-	cmd_manager.Listing = LISTING_DAY
-	cmd_manager.SkipTaskCreationPrompt = true
+func (cmdManager *CommandManager) GetTasks(taskManager *TaskManager) (Tasks, error) {
+	allTasks := GetTasks(taskManager)
+	cmdManager.Listing = LISTING_DAY
+	cmdManager.SkipTaskCreationPrompt = true
 
 	var tasks Tasks
-	if cmd_manager.DueDate.Before(time.Now()) && !cmd_manager.TimeSet {
-		tasks = all_tasks.FilterTasksDueBeforeToday()
+	if cmdManager.DueDate.Before(time.Now()) && !cmdManager.TimeSet {
+		tasks = allTasks.FilterTasksDueBeforeToday()
 		if len(tasks) == 0 {
-			tasks = *all_tasks
+			tasks = *allTasks
 		}
 	} else {
-		tasks = all_tasks.FilterTasksDueOnDay(cmd_manager.DueDate)
+		tasks = allTasks.FilterTasksDueOnDay(cmdManager.DueDate)
 	}
 
 	return tasks, nil
 }
 
 // What -a should be, don't list until we know we aren't gonna need to pipe
-func (cmd_manager *CommandManager) UseAllTasks() {
-	cmd_manager.Listing = LISTING_ALL
+func (cmdManager *CommandManager) UseAllTasks() {
+	cmdManager.Listing = LISTING_ALL
 }
 
 // -s
-func (cmd_manager *CommandManager) SkipTask(task_manager *TaskManager, index string) error {
-	skip_task := GetTasks(task_manager).GetByHash(index)
+func (cmdManager *CommandManager) SkipTask(taskManager *TaskManager, index string) error {
+	skip_task := GetTasks(taskManager).GetByHash(index)
 	if skip_task.Repeat == nil {
 		return errors.New("Can only skip repeat tasks")
 	}
-	_, err := cmd_manager.delete_task_helper(task_manager, index, false, true)
+	_, err := cmdManager.deleteTaskHelper(taskManager, index, false, true)
 	return err
 }
 
 // -D (true) and -d (false)
-func (cmd_manager *CommandManager) DeleteTask(task_manager *TaskManager, index string,
+func (cmdManager *CommandManager) DeleteTask(taskManager *TaskManager, index string,
 	force_delete bool) (*Task, error) {
 
-	task, err := cmd_manager.delete_task_helper(task_manager, index, force_delete, false)
+	task, err := cmdManager.deleteTaskHelper(taskManager, index, force_delete, false)
 	if err == nil && task == nil {
 		panic("At least one value was expected to be non-nil")
 	}
@@ -213,31 +213,31 @@ func (cmd_manager *CommandManager) DeleteTask(task_manager *TaskManager, index s
 }
 
 // helper for -D, -d, and -s
-func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager, index string,
+func (cmdManager *CommandManager) deleteTaskHelper(taskManager *TaskManager, index string,
 	force_delete, skip_repeat bool) (*Task, error) {
 
 	if force_delete && skip_repeat {
 		panic("force_delete and skip_repeat cannot both be true")
 	}
 
-	all_tasks := GetTasks(task_manager)
-	cmd_manager.SkipTaskCreationPrompt = true
-	var task_deleted *Task
+	allTasks := GetTasks(taskManager)
+	cmdManager.SkipTaskCreationPrompt = true
+	var taskDeleted *Task
 
-	switch cmd_manager.Listing {
+	switch cmdManager.Listing {
 	case LISTING_DAY:
 		var tasks Tasks
-		if cmd_manager.DueDate.Before(time.Now()) {
+		if cmdManager.DueDate.Before(time.Now()) {
 			// NOTE This is a special case: we want everything due today
 			// or before today with this call..
-			tasks = all_tasks.FilterTasksDueBeforeToday()
+			tasks = allTasks.FilterTasksDueBeforeToday()
 		} else {
-			tasks = all_tasks.FilterTasksDueOnDay(cmd_manager.DueDate)
+			tasks = allTasks.FilterTasksDueOnDay(cmdManager.DueDate)
 		}
 		if len(tasks) != 0 {
-			task_deleted = task_manager.DeleteTask(tasks, index)
-			if task_deleted != nil && task_deleted.Repeat == nil {
-				all_tasks.RemoveFirst(*task_deleted)
+			taskDeleted = taskManager.DeleteTask(tasks, index)
+			if taskDeleted != nil && taskDeleted.Repeat == nil {
+				allTasks.RemoveFirst(*taskDeleted)
 			}
 			break
 		}
@@ -246,65 +246,65 @@ func (cmd_manager *CommandManager) delete_task_helper(task_manager *TaskManager,
 		// tasks today.
 		fallthrough
 	case LISTING_ALL:
-		task_deleted = (task_manager).DeleteTask(*all_tasks, index)
-		if task_deleted != nil {
-			all_tasks.RemoveFirst(*task_deleted)
+		taskDeleted = (taskManager).DeleteTask(*allTasks, index)
+		if taskDeleted != nil {
+			allTasks.RemoveFirst(*taskDeleted)
 		}
 	}
 
-	if task_deleted == nil {
+	if taskDeleted == nil {
 		return nil, errors.New(fmt.Sprintf("Bad index \"%s\"", index))
 	}
 
-	if !force_delete && task_deleted.Repeat != nil {
+	if !force_delete && taskDeleted.Repeat != nil {
 		// Recreate the task if it has a repeat.
-		delay, err := strconv.Atoi(*task_deleted.Repeat)
+		delay, err := strconv.Atoi(*taskDeleted.Repeat)
 		if err != nil {
-			task_deleted.Due_date, err = get_humany_next_delay(*task_deleted.Repeat)
+			taskDeleted.DueDate, err = getHumanyNextDelay(*taskDeleted.Repeat)
 			if err != nil {
 				return nil, err
 			}
 		} else {
-			task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, delay)
+			taskDeleted.DueDate = taskDeleted.DueDate.AddDate(0, 0, delay)
 		}
-		if err := task_manager.SaveTask(task_deleted); err != nil {
+		if err := taskManager.SaveTask(taskDeleted); err != nil {
 			return nil, err
 		}
 	}
 
 	// Log in the audit log
 	if !force_delete && !skip_repeat {
-		original_StorageDirectory := task_manager.StorageDirectory
-		if task_deleted.category != nil {
-			task_manager.StorageDirectory = path.Join(task_manager.StorageDirectory, *task_deleted.category)
+		original_StorageDirectory := taskManager.StorageDirectory
+		if taskDeleted.category != nil {
+			taskManager.StorageDirectory = path.Join(taskManager.StorageDirectory, *taskDeleted.category)
 		}
-		task_manager.AuditLog(*task_deleted, cmd_manager.DueDate, cmd_manager.Annotation)
-		task_manager.StorageDirectory = original_StorageDirectory
+		taskManager.AuditLog(*taskDeleted, cmdManager.DueDate, cmdManager.Annotation)
+		taskManager.StorageDirectory = original_StorageDirectory
 	}
 
-	return task_deleted, nil
+	return taskDeleted, nil
 }
 
 // Remove tasks that are overdue by 3 days.
-func (cmd_manager *CommandManager) RemoveOverdueTasks(tasks Tasks, task_manager *TaskManager) {
+func (cmdManager *CommandManager) RemoveOverdueTasks(tasks Tasks, taskManager *TaskManager) {
 	for _, task := range tasks {
-		final_due_date := task.Due_date.AddDate(0, 0, task.Overdue_days)
-		overdue_days := int(math.Floor(time.Now().Sub(final_due_date).Hours() / 24))
+		finalDueDate := task.DueDate.AddDate(0, 0, task.OverdueDays)
+		overdue_days := int(math.Floor(time.Now().Sub(finalDueDate).Hours() / 24))
 		if overdue_days > 3 {
 			// TODO Remove once I'm used to this feature
 			LogError(fmt.Sprintf("Auto removing overdue task \"%v\"",
-				task.Body_content))
+				task.BodyContent))
 			if task.Repeat == nil {
-				cmd_manager.delete_task_helper(task_manager, task.full_index, true, false)
+				cmdManager.deleteTaskHelper(taskManager, task.fullIndex, true, false)
 			} else {
-				cmd_manager.delete_task_helper(task_manager, task.full_index, false, true)
+				cmdManager.deleteTaskHelper(taskManager, task.fullIndex, false, true)
 			}
 		}
 	}
 }
 
 // -r
-func (cmd_manager *CommandManager) SetRepeatHumany(days string) error {
+func (cmdManager *CommandManager) SetRepeatHumany(days string) error {
 	for _, day := range strings.Split(days, ",") {
 		switch strings.Title(day) {
 		case "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday":
@@ -313,110 +313,110 @@ func (cmd_manager *CommandManager) SetRepeatHumany(days string) error {
 			return errors.New(fmt.Sprintf("Invalid repeat day %s", day))
 		}
 	}
-	cmd_manager.Repeat = &days
+	cmdManager.Repeat = &days
 	return nil
 }
 
 // -r
-func (cmd_manager *CommandManager) SetRepeat(days int) error {
+func (cmdManager *CommandManager) SetRepeat(days int) error {
 	if days <= 0 {
 		return errors.New("Repeat time must be a positive, non-zero number")
 	}
 
 	hours := strconv.Itoa(int(days))
-	cmd_manager.Repeat = &hours
+	cmdManager.Repeat = &hours
 
 	return nil
 }
 
 // -n
-func (cmd_manager *CommandManager) SetDelay(days int) error {
+func (cmdManager *CommandManager) SetDelay(days int) error {
 	if days <= 0 {
 		return errors.New("Delay time must be a positive, non-zero number")
 	}
-	cmd_manager.OverdueDays = int(days)
+	cmdManager.OverdueDays = int(days)
 	return nil
 }
 
 // -x
-func (cmd_manager *CommandManager) DelayTask(task_manager *TaskManager, index string) error {
-	cmd_manager.SkipTaskCreationPrompt = true
+func (cmdManager *CommandManager) DelayTask(taskManager *TaskManager, index string) error {
+	cmdManager.SkipTaskCreationPrompt = true
 	// Always do a re-read for delays. Makes them both more expensive and multiple delays work.
 	tasks = nil
-	all_tasks := GetTasks(task_manager)
+	allTasks := GetTasks(taskManager)
 
 	var tasks Tasks
-	switch cmd_manager.Listing {
+	switch cmdManager.Listing {
 	case LISTING_ALL:
-		tasks = *all_tasks
+		tasks = *allTasks
 	case LISTING_DAY:
-		tasks = all_tasks.FilterTasksDueBeforeToday()
+		tasks = allTasks.FilterTasksDueBeforeToday()
 	}
 
-	task_deleted := task_manager.DeleteTask(tasks, index)
-	if task_deleted == nil {
+	taskDeleted := taskManager.DeleteTask(tasks, index)
+	if taskDeleted == nil {
 		return errors.New(fmt.Sprintf("Bad index \"%s\"", index))
 	}
 
-	if cmd_manager.TimeSet {
-		task_deleted.Due_date = cmd_manager.DueDate
+	if cmdManager.TimeSet {
+		taskDeleted.DueDate = cmdManager.DueDate
 	} else {
-		task_deleted.Due_date = task_deleted.Due_date.AddDate(0, 0, 1)
+		taskDeleted.DueDate = taskDeleted.DueDate.AddDate(0, 0, 1)
 	}
 
-	err := task_manager.SaveTask(task_deleted)
+	err := taskManager.SaveTask(taskDeleted)
 	return err
 }
 
 // -L, forwards the call and sets the prompt skip
-func (cmd_manager *CommandManager) GetCategories(task_manager *TaskManager) Categories {
-	cmd_manager.SkipTaskCreationPrompt = true
-	return task_manager.GetCategories()
+func (cmdManager *CommandManager) GetCategories(taskManager *TaskManager) Categories {
+	cmdManager.SkipTaskCreationPrompt = true
+	return taskManager.GetCategories()
 }
 
 // -A
-func (cmd_manager *CommandManager) GetAuditLog(task_manager *TaskManager) Records {
-	cmd_manager.SkipTaskCreationPrompt = true
+func (cmdManager *CommandManager) GetAuditLog(taskManager *TaskManager) Records {
+	cmdManager.SkipTaskCreationPrompt = true
 
-	records := task_manager.AuditRecords()
-	if !cmd_manager.TimeSet {
+	records := taskManager.AuditRecords()
+	if !cmdManager.TimeSet {
 		return records
 	}
 
-	year, month, day := cmd_manager.DueDate.Year(),
-		cmd_manager.DueDate.Month(),
-		cmd_manager.DueDate.Day()
+	year, month, day := cmdManager.DueDate.Year(),
+		cmdManager.DueDate.Month(),
+		cmdManager.DueDate.Day()
 
 	midnight := time.Date(year, month, day, 0, 0, 0, 0, time.Local)
-	var filtered_records Records
+	var filteredRecords Records
 	for _, record := range records {
 		if record.DateCompleted.After(midnight) {
-			filtered_records = append(filtered_records, record)
+			filteredRecords = append(filteredRecords, record)
 		}
 	}
-	return filtered_records
+	return filteredRecords
 }
 
 // -a, at the end if no action taken. Only call at the end, if tasks should be returned
 // we will do so.
-func (cmd_manager *CommandManager) GetTasksIfAll(task_manager *TaskManager) Tasks {
-	if cmd_manager.Listing == LISTING_ALL && !cmd_manager.SkipTaskCreationPrompt {
-		cmd_manager.SkipTaskCreationPrompt = true
-		all_tasks := GetTasks(task_manager)
-		return *all_tasks
+func (cmdManager *CommandManager) GetTasksIfAll(taskManager *TaskManager) Tasks {
+	if cmdManager.Listing == LISTING_ALL && !cmdManager.SkipTaskCreationPrompt {
+		cmdManager.SkipTaskCreationPrompt = true
+		allTasks := GetTasks(taskManager)
+		return *allTasks
 	}
 	return Tasks{}
 }
 
-func (cmd_manager *CommandManager) CreateTask(task_manager *TaskManager,
+func (cmdManager *CommandManager) CreateTask(taskManager *TaskManager,
 	input string) (*Task, error) {
-	task, err := NewTask(input, cmd_manager.DueDate,
-		cmd_manager.Repeat, cmd_manager.OverdueDays)
+	task, err := NewTask(input, cmdManager.DueDate,
+		cmdManager.Repeat, cmdManager.OverdueDays)
 	if err != nil {
 		return nil, err
 	}
 
-	err = task_manager.SaveTask(&task)
+	err = taskManager.SaveTask(&task)
 	if err != nil {
 		return nil, err
 	}
