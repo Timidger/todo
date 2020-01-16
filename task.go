@@ -58,9 +58,9 @@ func (task Task) String() string {
 	dueDate := time.Now().AddDate(0, 0, -task.OverdueDays)
 	if task.DueBefore(dueDate) {
 		passedDueDate := task.DueDate.AddDate(0, 0, task.OverdueDays)
-		passedDueDate = passedDueDate.Truncate(DAY_HOURS)
+		/*passedDueDate = passedDueDate.Truncate(DAY_HOURS)*/
 		overdueDays := int(math.Floor(time.Now().Sub(passedDueDate).Hours() / 24))
-		if task.DueBefore(time.Now().Truncate(DAY_HOURS)) && overdueDays >= 0 {
+		if task.DueBefore(time.Now().Truncate(DAY_HOURS)) && overdueDays > /*=*/ 0 {
 			if overdueDays == 1 || overdueDays == 0 {
 				daysLeft = fmt.Sprintf(" (%d day overdue)", 1)
 			} else {
@@ -111,7 +111,10 @@ func NewTask(text string, dueDate time.Time, repeat *string, overdueDays int) (T
 
 // Format just the task body
 func (task *Task) FormatTask() string {
-	if task.DueBefore(time.Now().AddDate(0, 0, -task.OverdueDays)) {
+	passedDueDate := task.DueDate.AddDate(0, 0, task.OverdueDays)
+	overdueDays := int(math.Floor(time.Now().Sub(passedDueDate).Hours() / 24))
+	if overdueDays > 0 {
+		//if task.DueBefore(time.Now().AddDate(0, 0, -task.OverdueDays)) {
 		return RED + task.String() + RESET
 	} else if task.DueAfter(time.Now().AddDate(0, 0, 6)) {
 		return GREY + task.String() + RESET
